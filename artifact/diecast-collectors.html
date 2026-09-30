@@ -303,7 +303,7 @@ const state = {
   cars: [], currency: "USD", view: "garage", filter: "all", brand: null, sort: "recent", query: "",
   storage: "starting", // cloud | local | starting
   sheet: null,          // {type:'scan'|'detail'|'edit'|'confirm', ...}
-  ai: null, aiImages: false,
+  ai: null, aiImages: "unknown", photoTarget: null,
 };
 let backend = null; // set in init()
 let sampleFn = null;
@@ -456,7 +456,7 @@ const AI_ERRORS = {
   image_rejected: "That photo couldn't be read. Try another one (JPEG or PNG).",
   refused: "Claude couldn't help with that photo. Try a different one.",
   invalid_json: "Claude's answer came back garbled. Tap Try again.",
-  images_unavailable: "Photo scanning isn't available in this view. Type the car's name instead.",
+  images_unavailable: "Claude can't read photos in this view. Type what's on the card instead.",
 };
 const aiError = (e) => AI_ERRORS[e?.code] || (e?.message && !e.code ? e.message : "Something went wrong reaching Claude. Try again.");
 
@@ -642,7 +642,7 @@ function settingsView() {
   <section class="card"><div class="label">Currency</div><div class="wrap">${CURRENCIES.map((c) => `<button class="chip ${state.currency === c ? "on" : ""}" data-currency="${c}">${c}</button>`).join("")}</div>
     <p class="dim">New scans are valued in this currency. Existing cars keep the currency they were added in.</p></section>
   <section class="card"><div class="label">AI</div>
-    <p class="dim">${sampleFn ? (state.aiImages ? "Scanning uses Claude on your own Claude plan. No API key, no card, no extra bill. The first scan asks you to allow it." : "Claude is available here but can't see photos in this view, so add cars by name.") : "Claude isn't available in this view. Open the page on claude.ai to scan cars."}</p></section>
+    <p class="dim">${sampleFn ? (state.aiImages !== "no" ? "Scanning uses Claude on your own Claude plan. No API key, no card, no extra bill. The first scan asks you to allow it." : "Claude works here but can't read photos in this view. Your photos are still saved; type what's on the card and Claude fills in the rest. Photo scanning may work if you open this link in your phone's web browser (signed in to claude.ai).") : "Claude isn't available in this view. Open the page on claude.ai to scan cars."}</p></section>
   <section class="card"><div class="label">Add without scanning</div><button class="btn secondary block" data-act="manual">Add a car by name</button></section>
   <section class="card"><div class="label">Backup file</div>
     <p class="dim">An extra copy you keep yourself (details and prices, not photos).</p>
@@ -741,6 +741,10 @@ function editSheet(s) {
   const input = (id, label, ph, extra = "") => `<label class="field"><span class="label">${label}</span><input id="${id}" value="${esc(f[id] ?? "")}" placeholder="${esc(ph)}" ${extra}></label>`;
   const opts = (key, map) => `<div class="field"><span class="label">${key === "packaging" ? "Packaging" : "Condition"}</span><div class="wrap">${Object.entries(map).map(([k, v]) => `<button class="chip ${f[key] === k ? "on" : ""}" data-opt="${key}:${k}">${v}</button>`).join("")}</div></div>`;
   return `<div class="sheet-bar"><button class="icon-btn" data-act="closeEdit" aria-label="Cancel">${I.close}</button><h2>${s.mode === "manual" ? "Add a car" : "Edit details"}</h2></div>
+    ${s.mode === "manual" ? (s.photo
+      ? `<div class="photo-wrap"><img class="photo" src="${esc(s.photo.photo)}" alt="Your photo"><button class="chip" style="position:absolute;right:12px;bottom:12px" data-act="addPhoto">Change photo</button></div>`
+      : `<button class="btn ghost block" data-act="addPhoto">${I.camera.replace("<svg", '<svg width="20" height="20"')} Add a photo</button>`) : ""}
+    ${s.mode === "manual" && s.note ? `<div class="warn-box">Photo saved. Claude can't read photos in this view, so type what's on the card (brand, name, series) and tap <b>Fill in with Claude</b>.</div>` : ""}
     ${s.mode === "manual" && sampleFn ? `<section class="card"><div class="label">Quick add</div><p class="dim" style="margin:0">Type what you know and Claude fills in the rest, value included.</p>
       <label class="field"><input id="quickText" placeholder="e.g. Hot Wheels Car Culture '71 Datsun 510 blue, carded" value="${esc(s.quick || "")}"></label>
       <button class="btn secondary" data-act="quickFill" ${s.quickBusy ? "disabled" : ""}>${s.quickBusy ? "Asking Claude…" : "Fill in with Claude"}</button></section>` : ""}
@@ -788,20 +792,33 @@ function render() {
 let pendingPhoto = null;
 function startScan() {
   if (!sampleFn) { toast("Scanning needs Claude. Open this page on claude.ai while signed in."); return; }
-  if (!state.aiImages) { openManual(); toast("Photo scanning isn't available here. Add the car by name instead."); return; }
+  state.photoTarget = null;
   state.picker = true;
   render();
 }
 function pickerHtml() {
   return `<div class="modal" role="dialog" aria-modal="true" aria-label="Add a photo"><div class="modal-box">
-    <h2 style="font-family:var(--display);text-transform:uppercase;font-size:24px">Scan a car</h2>
-    <p class="muted" style="margin:0">Fit the car, or the whole card, in the frame. Good light helps Claude read the card and base.</p>
+    <h2 style="font-family:var(--display);text-transform:uppercase;font-size:24px">${state.photoTarget ? "Add a photo" : "Scan a car"}</h2>
+    <p class="muted" style="margin:0">${state.photoTarget || state.aiImages === "no" ? "Fit the car, or the whole card, in the frame." : "Fit the car, or the whole card, in the frame. Good light helps Claude read the card and base."}</p>
     <button class="btn block" data-act="pickCamera">${I.camera.replace("<svg", '<svg width="20" height="20"')} Take photo</button>
     <button class="btn secondary block" data-act="pickLibrary">${I.photos.replace("<svg", '<svg width="20" height="20"')} Choose from photos</button>
     <button class="btn ghost block" data-act="pickCancel">Cancel</button></div></div>`;
 }
 async function onPhotoPicked(file) {
   if (!file) return;
+  // Photo for a car being added by hand: attach it, no AI needed.
+  if (state.photoTarget === "manual" && state.sheet?.type === "edit") {
+    const s = state.sheet;
+    try { s.photo = await preparePhoto(file); } catch (e) { s.error = e.message || "That photo couldn't be opened."; }
+    state.photoTarget = null;
+    return render();
+  }
+  // Claude can't see photos in this view: keep the photo and add the car by name.
+  if (state.aiImages === "no") {
+    let prepared = null;
+    try { prepared = await preparePhoto(file); } catch (e) { toast(e.message || "That photo couldn't be opened."); }
+    return openManual({ photo: prepared, note: true });
+  }
   state.sheet = { type: "scan", phase: "working", step: 0, photo: null };
   render();
   try {
@@ -825,7 +842,12 @@ async function runIdentify() {
     Object.assign(s, { phase: "review", details: r.details, description: r.description, confidence: r.confidence, alternatives: r.alternatives, market: r.market, status: "owned", myValue: "", purchase: "" });
   } catch (e) {
     if (state.sheet !== s) return;
-    Object.assign(s, { phase: "error", error: aiError(e), canRetry: !["not_granted", "sampling_disabled", "images_unavailable"].includes(e?.code) });
+    if (e?.code === "images_unavailable") {
+      // Now we know: this view can't send photos to Claude. Keep the photo and add by name.
+      state.aiImages = "no";
+      return openManual({ photo: pendingPhoto, note: true });
+    }
+    Object.assign(s, { phase: "error", error: aiError(e), canRetry: !["not_granted", "sampling_disabled"].includes(e?.code) });
   } finally { timers.forEach(clearTimeout); }
   render();
 }
@@ -893,8 +915,8 @@ async function estimateAll() {
   } catch (e) { toast(aiError(e)); }
   state.busyAll = false; render();
 }
-function openManual() {
-  state.sheet = { type: "edit", mode: "manual", form: { name: "", brand: "", series: "", year: "", scale: "1:64", make: "", model: "", color: "", castingNumber: "", packaging: "unknown", condition: "unknown", flags: [], notes: "", myValue: "", purchasePrice: "" } };
+function openManual(extra = {}) {
+  state.sheet = { type: "edit", mode: "manual", photo: extra.photo || null, note: !!extra.note, form: { name: "", brand: "", series: "", year: "", scale: "1:64", make: "", model: "", color: "", castingNumber: "", packaging: "unknown", condition: "unknown", flags: [], notes: "", myValue: "", purchasePrice: "" } };
   render();
 }
 function formFromDetails(d, extra = {}) {
@@ -936,8 +958,10 @@ function saveEdit() {
   }
   const at = nowIso(), myValue = parseAmount(f.myValue), purchasePrice = parseAmount(f.purchasePrice);
   const car = { ...d, id: newId(), status: "owned", createdAt: at, updatedAt: at, description: s.description || null, aiConfidence: null, currency: state.currency, purchasePrice, myValue, market: s.market || null, notes: String(f.notes || "").trim() || null,
-    valueHistory: s.market ? [{ date: at, estimate: s.market.estimate, low: s.market.low, high: s.market.high }] : [], myValueHistory: myValue !== null ? [{ date: at, value: myValue }] : [], thumb: null, hasPhoto: false };
+    valueHistory: s.market ? [{ date: at, estimate: s.market.estimate, low: s.market.low, high: s.market.high }] : [], myValueHistory: myValue !== null ? [{ date: at, value: myValue }] : [], thumb: s.photo?.thumb || null, hasPhoto: !!s.photo };
   upsertLocal(car); persistCar(car);
+  if (s.photo) { photoCache.set(car.id, s.photo.photo); backend.savePhoto(car.id, s.photo.photo).catch(() => toast("Couldn't save the full-size photo. The thumbnail was kept.")); }
+  pendingPhoto = null;
   state.sheet = { type: "detail", id: car.id }; render();
   toast("Added to your garage");
 }
@@ -990,7 +1014,8 @@ document.addEventListener("click", (ev) => {
     case "scan": return startScan();
     case "pickCamera": state.picker = false; $("#cameraInput").value = ""; $("#cameraInput").click(); return render();
     case "pickLibrary": state.picker = false; $("#libraryInput").value = ""; $("#libraryInput").click(); return render();
-    case "pickCancel": state.picker = false; return render();
+    case "pickCancel": state.picker = false; state.photoTarget = null; return render();
+    case "addPhoto": state.photoTarget = "manual"; state.picker = true; return render();
     case "rescan": state.sheet = null; render(); return startScan();
     case "retryScan": return runIdentify();
     case "manual": return openManual();
@@ -1048,7 +1073,8 @@ async function init() {
   const api = window.claude;
   const [db, user, sample] = await Promise.all(["db", "user", "sample"].map((n) => api?.use ? api.use(n).catch(() => null) : Promise.resolve(null)));
   sampleFn = sample || null;
-  if (sampleFn) { try { state.aiImages = !!(await sampleFn.limits())?.images; } catch { state.aiImages = false; } }
+  // Some viewers can't report their limits; then we simply try sending the photo and learn from the answer.
+  if (sampleFn) { try { state.aiImages = (await sampleFn.limits())?.images ? "yes" : "no"; } catch { state.aiImages = "unknown"; } }
   const uid = user ? await user.id().catch(() => null) : null;
   backend = db && uid ? cloudBackend(db, uid) : localBackend();
   state.storage = backend.kind;
