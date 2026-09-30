@@ -1,0 +1,64 @@
+{
+  "expo": {
+    "name": "Diecast Collectors",
+    "slug": "diecast-collectors",
+    "scheme": "diecastcollectors",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "dark",
+    "backgroundColor": "#15171C",
+    "ios": {
+      "supportsTablet": false,
+      "bundleIdentifier": "com.diecastcollectors.app",
+      "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false
+      }
+    },
+    "android": {
+      "package": "com.diecastcollectors.app",
+      "adaptiveIcon": {
+        "backgroundColor": "#E10600",
+        "foregroundImage": "./assets/android-icon-foreground.png",
+        "backgroundImage": "./assets/android-icon-background.png",
+        "monochromeImage": "./assets/android-icon-monochrome.png"
+      },
+      "predictiveBackGestureEnabled": false
+    },
+    "web": {
+      "favicon": "./assets/favicon.png",
+      "output": "single",
+      "bundler": "metro"
+    },
+    "plugins": [
+      "expo-router",
+      "expo-sharing",
+      "expo-image",
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "Diecast Collectors uses the camera to scan and identify your diecast cars.",
+          "recordAudioAndroid": false,
+          "microphonePermission": false
+        }
+      ],
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Diecast Collectors reads the photos you choose so it can identify your diecast cars."
+        }
+      ],
+      [
+        "expo-splash-screen",
+        {
+          "image": "./assets/splash-icon.png",
+          "imageWidth": 160,
+          "backgroundColor": "#15171C"
+        }
+      ]
+    ],
+    "experiments": {
+      "typedRoutes": false
+    }
+  }
+}

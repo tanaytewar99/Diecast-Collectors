@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024">
+  <!-- Diecast Collectors mark: 1:64 car silhouette inside scan-frame corners. -->
+  <g fill="none" stroke="#FFFFFF" stroke-width="36" stroke-linecap="round">
+    <path d="M232 332 V252 a20 20 0 0 1 20 -20 H332"/>
+    <path d="M692 232 H772 a20 20 0 0 1 20 20 V332"/>
+    <path d="M232 692 V772 a20 20 0 0 0 20 20 H332"/>
+    <path d="M692 792 H772 a20 20 0 0 0 20 -20 V692"/>
+  </g>
+  <path fill="#FFFFFF" d="M268 596 C268 560 290 540 330 532 L420 516 L490 452 C510 434 532 426 560 426 L660 426 C690 426 712 438 730 460 L770 510 L790 514 C820 520 840 546 840 578 L840 604 C840 616 830 626 818 626 L772 626 A62 62 0 0 0 648 626 L420 626 A62 62 0 0 0 296 626 L284 626 C274 626 268 618 268 608 Z"/>
+  <path fill="#E10600" d="M512 468 L556 450 L652 450 C668 450 680 456 690 468 L720 506 L512 506 Z"/>
+  <circle cx="358" cy="630" r="46" fill="#FFFFFF"/><circle cx="358" cy="630" r="20" fill="#E10600"/>
+  <circle cx="710" cy="630" r="46" fill="#FFFFFF"/><circle cx="710" cy="630" r="20" fill="#E10600"/>
+</svg>
