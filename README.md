@@ -16,7 +16,9 @@ never loses anything.
 - **Light on typing.** After a scan you review a finished card and tap *Add to Garage*.
 - Garage and wishlist, search, filters, sorting, insights, JSON export/import.
 
-**Getting started: [docs/SETUP.md](docs/SETUP.md)** (Supabase, eBay and Anthropic keys, then run on your phone).
+**Try it free, no setup:** `artifact/diecast-collectors.html` is a web version published on claude.ai. It uses Claude through your own Claude plan (no API key) and saves your garage to your Claude account.
+
+**Native app setup: [docs/SETUP.md](docs/SETUP.md)** (Supabase, eBay and Anthropic keys, then run on your phone).
 Product design: [docs/PRODUCT_SPEC.md](docs/PRODUCT_SPEC.md).
 
 ## Repo layout
@@ -27,6 +29,7 @@ Product design: [docs/PRODUCT_SPEC.md](docs/PRODUCT_SPEC.md).
 | `supabase/migrations/` | Database: `cars` table, photo bucket, per-user security rules, daily scan cap |
 | `supabase/functions/` | Edge functions: `identify` (Claude + eBay), `valuate` (eBay only), `delete-account` |
 | `supabase/tests/` | Deno tests for the functions, and the schema run against real Postgres (PGlite) |
+| `artifact/` | Free web version that runs on claude.ai (Claude for scanning, your Claude account for storage) |
 | `docs/` | Setup guide and product spec |
 
 ## Development

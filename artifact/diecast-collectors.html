@@ -1,0 +1,1068 @@
+<title>Diecast Collectors</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@700;800;900&family=Barlow:wght@400;500;600;700&display=swap">
+<style>
+/* Layout: one-column phone app (max 560px) with a fixed bottom tab bar and a centre scan button, like the native app.
+   Deliberately dark-only: the brand's pit-garage look (asphalt, racing red, podium gold). */
+:root {
+  --bg: #15171c;        /* asphalt */
+  --surface: #23262e;   /* graphite */
+  --surface-2: #2d313b;
+  --line: #393e4a;
+  --fg: #ffffff;
+  --muted: #c9ced6;     /* chrome */
+  --dim: #8a909c;
+  --red: #e10600;       /* racing red */
+  --red-press: #b30500;
+  --gold: #f5b400;      /* podium gold */
+  --up: #22c55e;
+  --down: #ef4444;
+  --chart-market: #b98700;  /* chart series validated on the dark surface */
+  --chart-mine: #5b8def;
+  --grid: #30343d;
+  --display: "Big Shoulders Display", "Arial Narrow", Impact, sans-serif;
+  --body: "Barlow", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --r-sm: 8px; --r-md: 12px; --r-lg: 18px; --r-xl: 24px;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+html, body { background: var(--bg); color: var(--fg); }
+body { font-family: var(--body); font-size: 15px; line-height: 1.4; margin: 0; -webkit-tap-highlight-color: transparent; }
+button, input, select, textarea { font: inherit; color: inherit; }
+button { cursor: pointer; }
+:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
+.app { max-width: 560px; margin: 0 auto; padding-inline: 16px; padding-block: 16px 120px; display: grid; gap: 16px; }
+.num { font-variant-numeric: tabular-nums; }
+h1, h2, h3 { margin: 0; text-wrap: balance; }
+.label { font-size: 11px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--dim); }
+.muted { color: var(--muted); }
+.dim { color: var(--dim); font-size: 13px; }
+.card { background: var(--surface); border-radius: var(--r-lg); padding: 16px; display: grid; gap: 10px; min-width: 0; }
+.row { display: flex; align-items: center; gap: 8px; min-width: 0; }
+.between { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.wrap { display: flex; flex-wrap: wrap; gap: 8px; }
+
+/* Brand */
+.brand { display: flex; align-items: center; gap: 10px; }
+.logo { width: 34px; height: 34px; border-radius: 9px; background: var(--red); display: grid; place-items: center; flex: none; }
+.logo svg { width: 22px; height: 22px; }
+.brand-name { font-family: var(--display); font-weight: 800; font-size: 22px; letter-spacing: .01em; text-transform: uppercase; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+.sync-pill { margin-left: auto; font-size: 12px; color: var(--muted); display: flex; align-items: center; gap: 6px; white-space: nowrap; flex: none; }
+.dot { width: 8px; height: 8px; border-radius: 50%; background: var(--up); flex: none; }
+.dot.warn { background: var(--gold); }
+
+/* Buttons */
+.btn { min-height: 48px; border-radius: var(--r-md); border: 0; padding: 0 16px; display: inline-flex; align-items: center; justify-content: center; gap: 8px; font-weight: 700; font-size: 16px; background: var(--red); color: #fff; }
+.btn:active { background: var(--red-press); }
+.btn.secondary { background: var(--surface-2); }
+.btn.ghost { background: transparent; border: 1px solid var(--line); }
+.btn.danger { background: transparent; border: 1px solid var(--line); color: var(--down); }
+.btn[disabled] { opacity: .5; cursor: default; }
+.btn.block { width: 100%; }
+.chip { border: 1px solid var(--line); background: var(--surface); color: var(--muted); border-radius: 999px; padding: 6px 12px; font-size: 13px; font-weight: 600; white-space: nowrap; }
+.chip.on { background: var(--red); border-color: var(--red); color: #fff; }
+.chip.gold { border-color: var(--gold); color: var(--gold); background: transparent; }
+.chips-scroll { display: flex; gap: 8px; overflow-x: auto; scrollbar-width: none; padding-bottom: 2px; }
+.icon-btn { width: 40px; height: 40px; border-radius: 50%; border: 0; background: var(--surface-2); display: grid; place-items: center; flex: none; }
+.icon-btn svg { width: 20px; height: 20px; }
+
+/* Hero */
+.hero { background: var(--surface); border-radius: var(--r-xl); padding: 20px; display: grid; gap: 4px; border-top: 3px solid var(--red); }
+.hero-value { font-family: var(--display); font-weight: 900; font-size: 52px; line-height: 1; letter-spacing: .01em; }
+.stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-top: 14px; }
+.stat b { display: block; font-size: 18px; }
+.stat span { color: var(--dim); font-size: 12px; }
+.delta { font-weight: 700; font-size: 14px; }
+.delta.up { color: var(--up); } .delta.down { color: var(--down); }
+
+/* Search */
+.search { display: flex; align-items: center; gap: 8px; background: var(--surface); border-radius: var(--r-md); padding: 0 12px; }
+.search input { flex: 1; min-width: 0; background: transparent; border: 0; padding: 12px 0; outline: none; }
+
+/* Grid of cars */
+.grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+.car { background: var(--surface); border-radius: var(--r-lg); overflow: hidden; border: 0; padding: 0; text-align: left; display: grid; }
+.thumb { aspect-ratio: 4 / 3; width: 100%; max-width: 100%; background: var(--surface-2); object-fit: cover; display: block; }
+.thumb.empty { display: grid; place-items: center; }
+.thumb.empty svg { width: 44px; height: 44px; opacity: .35; }
+.car-body { padding: 10px 12px 12px; display: grid; gap: 2px; min-width: 0; }
+.car-name { font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.car-meta { color: var(--dim); font-size: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.car-value { color: var(--gold); font-weight: 800; font-size: 17px; margin-top: 4px; display: flex; align-items: center; gap: 4px; }
+.car-wrap { position: relative; }
+.badge { position: absolute; top: 8px; left: 8px; font-size: 11px; font-weight: 800; padding: 3px 8px; border-radius: 999px; background: var(--gold); color: var(--bg); }
+.badge.wish { background: var(--surface-2); color: var(--fg); }
+
+.empty-state { display: grid; justify-items: center; gap: 12px; text-align: center; padding: 28px 12px; }
+.empty-icon { width: 84px; height: 84px; border-radius: 50%; background: var(--surface); display: grid; place-items: center; }
+.empty-icon svg { width: 40px; height: 40px; }
+
+/* Tab bar */
+.tabbar { position: fixed; left: 0; right: 0; bottom: 0; background: var(--bg); border-top: 1px solid var(--surface); padding-bottom: env(safe-area-inset-bottom, 0px); z-index: 10; }
+.tabbar-inner { max-width: 560px; margin: 0 auto; display: grid; grid-template-columns: repeat(4, 1fr); align-items: end; height: 64px; }
+.tab { background: none; border: 0; color: var(--dim); display: grid; justify-items: center; gap: 2px; font-size: 11px; font-weight: 700; padding: 8px 0; }
+.tab svg { width: 24px; height: 24px; }
+.tab.on { color: var(--red); }
+.fab-wrap { display: grid; justify-items: center; }
+.fab { width: 66px; height: 66px; margin-top: -26px; border-radius: 50%; border: 4px solid var(--bg); background: var(--red); display: grid; place-items: center; box-shadow: 0 6px 18px rgb(225 6 0 / .45); }
+.fab svg { width: 30px; height: 30px; }
+
+/* Sheets (scan result, detail, edit) */
+.sheet { position: fixed; inset: 0; background: var(--bg); z-index: 20; overflow-y: auto; padding-top: env(safe-area-inset-top, 0px); }
+.sheet-inner { max-width: 560px; margin: 0 auto; padding-inline: 16px; padding-block: 8px 140px; display: grid; gap: 16px; }
+.sheet-bar { position: sticky; top: 0; z-index: 2; background: var(--bg); display: flex; align-items: center; gap: 8px; padding-block: 8px; }
+.sheet-bar h2 { font-size: 17px; flex: 1; }
+.photo { width: 100%; max-width: 100%; aspect-ratio: 4 / 3; object-fit: cover; border-radius: var(--r-xl); background: var(--surface); display: block; }
+.photo-wrap { position: relative; }
+.match { position: absolute; top: 12px; right: 12px; background: rgb(0 0 0 / .6); border-radius: 999px; padding: 4px 10px; font-size: 12px; font-weight: 700; }
+.title { font-family: var(--display); font-weight: 800; font-size: 34px; line-height: 1.05; letter-spacing: .01em; }
+.facts { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+.fact b { display: block; font-weight: 600; overflow-wrap: anywhere; }
+.footer { position: fixed; left: 0; right: 0; bottom: 0; background: var(--bg); border-top: 1px solid var(--surface); z-index: 21; padding-bottom: env(safe-area-inset-bottom, 0px); }
+.footer-inner { max-width: 560px; margin: 0 auto; padding: 12px 16px; display: grid; gap: 8px; }
+.two { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.warn-box { border: 1px solid var(--gold); background: rgb(245 180 0 / .1); border-radius: var(--r-md); padding: 12px; }
+.money { display: flex; align-items: center; background: var(--bg); border: 1px solid var(--line); border-radius: var(--r-md); padding: 0 12px; min-height: 48px; }
+.money span { color: var(--dim); font-weight: 700; margin-right: 8px; font-size: 13px; }
+.money input { flex: 1; min-width: 0; background: transparent; border: 0; outline: none; font-size: 18px; font-weight: 700; padding: 10px 0; }
+.segment { display: grid; grid-template-columns: 1fr 1fr; background: var(--surface); border-radius: var(--r-md); padding: 4px; }
+.segment button { border: 0; background: transparent; color: var(--dim); font-weight: 700; padding: 10px; border-radius: var(--r-sm); }
+.segment button.on { background: var(--red); color: #fff; }
+.alt { background: var(--surface); border: 0; border-radius: var(--r-md); padding: 12px; text-align: left; display: flex; align-items: center; gap: 12px; }
+.estimate { font-family: var(--display); font-weight: 900; font-size: 40px; line-height: 1; color: var(--gold); }
+.conf { border: 1px solid; border-radius: 999px; padding: 1px 8px; font-size: 11px; font-weight: 700; text-transform: capitalize; }
+.cells { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+.cell { background: var(--bg); border: 0; border-radius: var(--r-md); padding: 10px; text-align: left; display: grid; gap: 2px; min-width: 0; }
+.cell b { font-size: 15px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.cell.set b { color: var(--red); }
+.headline { font-family: var(--display); font-weight: 900; font-size: 48px; line-height: 1; }
+.kv { display: flex; justify-content: space-between; gap: 16px; padding: 8px 0; border-bottom: 1px solid var(--surface-2); }
+.kv span:last-child { font-weight: 600; text-align: right; overflow-wrap: anywhere; }
+.steps { display: grid; gap: 10px; justify-items: start; margin: 0 auto; }
+.step { display: flex; gap: 10px; align-items: center; color: var(--dim); font-weight: 600; }
+.step.on { color: var(--fg); }
+.step i { width: 12px; height: 12px; border-radius: 50%; border: 2px solid var(--line); }
+.step.on i { border-color: var(--red); background: var(--red); animation: pulse 1s ease-in-out infinite alternate; }
+.step.done i { border-color: var(--up); background: var(--up); }
+@keyframes pulse { from { opacity: .4 } to { opacity: 1 } }
+@media (prefers-reduced-motion: reduce) { .step.on i { animation: none; } }
+
+/* Forms */
+.field { display: grid; gap: 6px; min-width: 0; }
+.field input, .field textarea { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r-md); padding: 12px; outline: none; width: 100%; }
+.field textarea { min-height: 90px; resize: vertical; }
+
+/* Chart */
+.chart { position: relative; }
+.chart svg { display: block; width: 100%; height: 180px; touch-action: pan-y; }
+.legend { display: flex; gap: 16px; font-size: 12px; color: var(--muted); }
+.legend i { display: inline-block; width: 14px; height: 3px; border-radius: 2px; margin-right: 6px; vertical-align: middle; }
+.tip { position: absolute; top: 4px; background: var(--bg); border: 1px solid var(--line); border-radius: 8px; padding: 6px 8px; font-size: 12px; pointer-events: none; white-space: nowrap; }
+
+/* Bars */
+.bar-track { height: 8px; border-radius: 4px; background: var(--bg); }
+.bar { height: 8px; border-radius: 4px; background: var(--chart-market); }
+.tiles { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+.tile { background: var(--surface); border-radius: 14px; padding: 12px; }
+.tile b { display: block; font-size: 19px; font-weight: 800; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.tile span { color: var(--dim); font-size: 12px; }
+.list-row { display: flex; align-items: center; gap: 12px; padding: 8px 0; background: none; border: 0; text-align: left; width: 100%; }
+.list-row .grow { flex: 1; min-width: 0; }
+
+/* Dialog + toast */
+.modal { position: fixed; inset: 0; background: rgb(0 0 0 / .6); z-index: 40; display: grid; place-items: center; padding: 16px; }
+.modal-box { background: var(--surface); border-radius: var(--r-lg); padding: 20px; max-width: 400px; width: 100%; display: grid; gap: 12px; }
+.toast { position: fixed; left: 50%; transform: translateX(-50%); bottom: calc(84px + env(safe-area-inset-bottom, 0px)); background: var(--surface-2); border: 1px solid var(--line); border-radius: 999px; padding: 10px 16px; font-weight: 600; z-index: 50; max-width: calc(100% - 32px); text-align: center; }
+.spinner { width: 36px; height: 36px; border: 3px solid var(--surface-2); border-top-color: var(--red); border-radius: 50%; animation: spin .8s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg) } }
+.visually-hidden { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
+a { color: var(--gold); }
+</style>
+
+<div id="root"></div>
+<input id="cameraInput" class="visually-hidden" type="file" accept="image/*" capture="environment" aria-label="Take a photo">
+<input id="libraryInput" class="visually-hidden" type="file" accept="image/*" aria-label="Choose a photo">
+<input id="importInput" class="visually-hidden" type="file" accept="application/json,.json" aria-label="Import collection">
+
+<script>
+"use strict";
+/* =========================================================================
+   Diecast Collectors (web version on claude.ai)
+   - AI identification + value estimates: Claude, on the viewer's own Claude plan (`sample`)
+   - Storage: the viewer's private area of this artifact's database (`db`), so a new phone
+     just needs the same Claude login. Falls back to this browser's storage if unavailable.
+   ========================================================================= */
+
+// ---------- icons ----------
+const I = {
+  car: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M5 11l1.6-4.2A2 2 0 0 1 8.5 5.5h7a2 2 0 0 1 1.9 1.3L19 11h.5A1.5 1.5 0 0 1 21 12.5V17a1 1 0 0 1-1 1h-1.1a2.5 2.5 0 0 1-4.8 0H9.9a2.5 2.5 0 0 1-4.8 0H4a1 1 0 0 1-1-1v-4.5A1.5 1.5 0 0 1 4.5 11H5zm2.2 0h9.6l-1.2-3.3a.5.5 0 0 0-.5-.3H8.9a.5.5 0 0 0-.5.3L7.2 11zM7.5 18.5a1 1 0 1 0 0-2 1 1 0 0 0 0 2zm9 0a1 1 0 1 0 0-2 1 1 0 0 0 0 2z"/></svg>',
+  scan: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M4 8V6a2 2 0 0 1 2-2h2M16 4h2a2 2 0 0 1 2 2v2M20 16v2a2 2 0 0 1-2 2h-2M8 20H6a2 2 0 0 1-2-2v-2"/></svg>',
+  chart: '<svg viewBox="0 0 24 24" fill="currentColor"><rect x="4" y="12" width="3.5" height="8" rx="1"/><rect x="10.25" y="4" width="3.5" height="16" rx="1"/><rect x="16.5" y="8" width="3.5" height="12" rx="1"/></svg>',
+  gear: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M19.4 13a7.6 7.6 0 0 0 0-2l2-1.6-2-3.4-2.4 1a7.4 7.4 0 0 0-1.7-1L15 3.5h-4l-.4 2.5a7.4 7.4 0 0 0-1.7 1l-2.4-1-2 3.4L4.6 11a7.6 7.6 0 0 0 0 2l-2 1.6 2 3.4 2.4-1c.5.4 1.1.7 1.7 1l.4 2.5h4l.4-2.5c.6-.3 1.2-.6 1.7-1l2.4 1 2-3.4-2-1.6zM12 15.5a3.5 3.5 0 1 1 0-7 3.5 3.5 0 0 1 0 7z"/></svg>',
+  back: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg>',
+  close: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>',
+  edit: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20h4l10.5-10.5a2.1 2.1 0 0 0-4-4L4 16v4z"/></svg>',
+  trash: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3"/></svg>',
+  search: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="11" cy="11" r="6.5"/><path d="M20 20l-4.2-4.2"/></svg>',
+  refresh: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 11a8 8 0 1 0-2.3 5.7M20 5v6h-6"/></svg>',
+  camera: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13" r="3.5"/></svg>',
+  photos: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 16l5-5 4 4 3-3 6 6"/></svg>',
+  up: '<svg viewBox="0 0 10 10" width="10" height="10" fill="currentColor"><path d="M5 2l4 6H1z"/></svg>',
+  down: '<svg viewBox="0 0 10 10" width="10" height="10" fill="currentColor"><path d="M5 8L1 2h8z"/></svg>',
+};
+
+// ---------- helpers ----------
+const $ = (sel, el = document) => el.querySelector(sel);
+const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+const nowIso = () => new Date().toISOString();
+const newId = () => Date.now().toString(36) + "-" + Math.random().toString(36).slice(2, 8);
+const CURRENCIES = ["USD", "EUR", "GBP", "INR", "JPY", "CAD", "AUD"];
+const PACKAGING = { carded: "Carded", boxed: "Boxed", loose: "Loose", unknown: "Unknown" };
+const CONDITION = { mint: "Mint", near_mint: "Near mint", good: "Good", fair: "Fair", poor: "Poor", unknown: "Unknown" };
+const FLAGS = ["Treasure Hunt", "Super Treasure Hunt", "Chase", "Limited Edition", "Real Riders", "Error"];
+const BRANDS = ["Hot Wheels", "Matchbox", "Mini GT", "Tomica", "Majorette", "Johnny Lightning", "M2 Machines", "Greenlight", "Inno64", "Tarmac Works"];
+
+function money(v, cur, compact) {
+  if (v === null || v === undefined || Number.isNaN(v)) return "—";
+  const noCents = cur === "JPY" || Math.abs(v) >= 1000 || compact;
+  try {
+    return new Intl.NumberFormat(undefined, {
+      style: "currency", currency: cur,
+      maximumFractionDigits: noCents ? 0 : 2,
+      minimumFractionDigits: noCents ? 0 : Number.isInteger(v) ? 0 : 2,
+      notation: compact && Math.abs(v) >= 10000 ? "compact" : "standard",
+    }).format(v);
+  } catch { return cur + " " + v.toFixed(noCents ? 0 : 2); }
+}
+function parseAmount(t) {
+  const c = String(t).replace(/[^0-9.,]/g, "").replace(/,(?=\d{3}(\D|$))/g, "").replace(",", ".");
+  if (!c) return null;
+  const n = parseFloat(c);
+  return Number.isFinite(n) && n >= 0 ? Math.round(n * 100) / 100 : null;
+}
+function ago(iso) {
+  const m = Math.round((Date.now() - new Date(iso).getTime()) / 60000);
+  if (m < 1) return "just now";
+  if (m < 60) return m + " min ago";
+  const h = Math.round(m / 60); if (h < 24) return h + "h ago";
+  const d = Math.round(h / 24); if (d < 30) return d + (d === 1 ? " day ago" : " days ago");
+  const mo = Math.round(d / 30); return mo < 12 ? mo + " mo ago" : Math.round(mo / 12) + "y ago";
+}
+const pct = (p) => p === null || !Number.isFinite(p) ? "" : " (" + (Math.abs(p) * 100).toFixed(Math.abs(p) < 0.1 ? 1 : 0) + "%)";
+
+// ---------- value logic (same rules as the native app) ----------
+const effectiveValue = (c) => c.myValue ?? c.market?.estimate ?? 0;
+function gainOf(c) {
+  if (c.purchasePrice === null || c.purchasePrice === undefined) return null;
+  const v = c.myValue ?? c.market?.estimate;
+  if (v === undefined || v === null) return null;
+  const amount = v - c.purchasePrice;
+  return { amount, pct: c.purchasePrice > 0 ? amount / c.purchasePrice : null };
+}
+function sameDayReplace(list, point) {
+  const day = point.date.slice(0, 10);
+  return [...(list || []).filter((p) => p.date.slice(0, 10) !== day), point].sort((a, b) => a.date.localeCompare(b.date));
+}
+function totals(cars) {
+  const owned = cars.filter((c) => c.status === "owned");
+  const sum = (f) => owned.reduce((a, c) => a + f(c), 0);
+  const invested = sum((c) => c.purchasePrice ?? 0);
+  return {
+    owned: owned.length, wishlist: cars.length - owned.length, invested,
+    market: sum((c) => c.market?.estimate ?? 0), mine: sum((c) => c.myValue ?? 0),
+    value: sum(effectiveValue),
+    gain: sum((c) => (c.purchasePrice !== null && c.purchasePrice !== undefined ? effectiveValue(c) : 0)) - invested,
+  };
+}
+function valueAt(c, day) {
+  if (day < c.createdAt.slice(0, 10)) return null;
+  const mine = [...(c.myValueHistory || [])].reverse().find((p) => p.date.slice(0, 10) <= day);
+  if (mine) return mine.value;
+  const m = [...(c.valueHistory || [])].reverse().find((p) => p.date.slice(0, 10) <= day);
+  if (m) return m.estimate;
+  return c.myValueHistory?.[0]?.value ?? c.valueHistory?.[0]?.estimate ?? null;
+}
+function collectionSeries(cars) {
+  const owned = cars.filter((c) => c.status === "owned");
+  const days = new Set([nowIso().slice(0, 10)]);
+  owned.forEach((c) => { days.add(c.createdAt.slice(0, 10)); (c.valueHistory || []).forEach((p) => days.add(p.date.slice(0, 10))); (c.myValueHistory || []).forEach((p) => days.add(p.date.slice(0, 10))); });
+  return [...days].sort().map((d) => ({ date: d, value: owned.reduce((a, c) => a + (valueAt(c, d) ?? 0), 0) }));
+}
+function monthChange(cars) {
+  const s = collectionSeries(cars);
+  if (s.length < 2) return null;
+  const cutoff = new Date(Date.now() - 30 * 864e5).toISOString().slice(0, 10);
+  const base = [...s].reverse().find((p) => p.date <= cutoff) ?? s[0];
+  const cur = s[s.length - 1].value, amount = cur - base.value;
+  return { amount, pct: base.value > 0 ? amount / base.value : null };
+}
+
+// ---------- state ----------
+const state = {
+  cars: [], currency: "USD", view: "garage", filter: "all", brand: null, sort: "recent", query: "",
+  storage: "starting", // cloud | local | starting
+  sheet: null,          // {type:'scan'|'detail'|'edit'|'confirm', ...}
+  ai: null, aiImages: false,
+};
+let backend = null; // set in init()
+let sampleFn = null;
+const photoCache = new Map();
+
+// ---------- storage backends ----------
+function localBackend() {
+  const KEY = "diecast-collectors/web/v1";
+  const read = () => { try { return JSON.parse(localStorage.getItem(KEY) || "{}"); } catch { return {}; } };
+  const write = (d) => { try { localStorage.setItem(KEY, JSON.stringify(d)); } catch { toast("This browser is blocking storage; changes won't be kept."); } };
+  let listener = () => {};
+  return {
+    kind: "local",
+    subscribe(fn) { listener = fn; fn(Object.values(read().cars || {})); return () => {}; },
+    async saveCar(car) { const d = read(); d.cars = d.cars || {}; d.cars[car.id] = car; write(d); listener(Object.values(d.cars)); },
+    async deleteCar(id) { const d = read(); delete d.cars?.[id]; delete d.photos?.[id]; write(d); listener(Object.values(d.cars || {})); },
+    async savePhoto(id, dataUri) { const d = read(); d.photos = d.photos || {}; d.photos[id] = dataUri; write(d); },
+    async getPhoto(id) { return read().photos?.[id] ?? null; },
+    async getSettings() { return read().settings || {}; },
+    async saveSettings(s) { const d = read(); d.settings = { ...(d.settings || {}), ...s }; write(d); },
+  };
+}
+
+function cloudBackend(db, uid) {
+  const root = db.doc("data/users/" + uid + "/garage");
+  const cars = root.collection("cars");
+  const photos = root.collection("photos");
+  const settings = db.doc("data/users/" + uid + "/settings");
+  return {
+    kind: "cloud",
+    subscribe(fn, onError) {
+      return cars.onSnapshot((snap) => fn(snap.docs.map((d) => ({ ...d.data(), id: d.id }))), onError);
+    },
+    async saveCar(car) { const { id, ...body } = car; await cars.doc(id).set(JSON.parse(JSON.stringify(body))); },
+    async deleteCar(id) { await cars.doc(id).delete(); await photos.doc(id).delete(); },
+    async savePhoto(id, dataUri) { await photos.doc(id).set({ data: dataUri }); },
+    async getPhoto(id) { const s = await photos.doc(id).get(); return s.exists ? s.data().data : null; },
+    async getSettings() { const s = await settings.get(); return s.exists ? s.data() : {}; },
+    async saveSettings(s) { const cur = await settings.get(); await (cur.exists ? settings.update(s) : settings.set(s)); },
+  };
+}
+
+// Serialise writes per car so rapid edits never overlap on one document.
+const writeChains = new Map();
+function persistCar(car) {
+  const prev = writeChains.get(car.id) || Promise.resolve();
+  const next = prev.then(() => backend.saveCar(car)).catch((e) => {
+    console.warn("save failed", e);
+    toast(e?.code === "quota_exceeded" ? "Storage is full. Delete some cars to add more." : "Couldn't save that change. Check your connection and try again.");
+  });
+  writeChains.set(car.id, next);
+  return next;
+}
+function upsertLocal(car) {
+  const i = state.cars.findIndex((c) => c.id === car.id);
+  if (i >= 0) state.cars[i] = car; else state.cars.unshift(car);
+}
+function updateCar(id, patch) {
+  const c = state.cars.find((x) => x.id === id);
+  if (!c) return;
+  const next = { ...c, ...patch, updatedAt: nowIso() };
+  upsertLocal(next);
+  persistCar(next);
+  render();
+}
+
+// ---------- images ----------
+async function loadImage(file) {
+  if ("createImageBitmap" in window) {
+    try { return await createImageBitmap(file, { imageOrientation: "from-image" }); } catch {}
+  }
+  return await new Promise((res, rej) => {
+    const img = new Image();
+    img.onload = () => res(img);
+    img.onerror = () => rej(new Error("That photo couldn't be opened. Try a JPEG or PNG."));
+    img.src = URL.createObjectURL(file);
+  });
+}
+function drawScaled(img, edge) {
+  const w = img.width, h = img.height, s = Math.min(1, edge / Math.max(w, h));
+  const c = document.createElement("canvas");
+  c.width = Math.round(w * s); c.height = Math.round(h * s);
+  c.getContext("2d").drawImage(img, 0, 0, c.width, c.height);
+  return c;
+}
+async function preparePhoto(file) {
+  const img = await loadImage(file);
+  const forAi = await new Promise((r) => drawScaled(img, 1280).toBlob(r, "image/jpeg", 0.85));
+  const photo = drawScaled(img, 900).toDataURL("image/jpeg", 0.72);
+  const thumb = drawScaled(img, 280).toDataURL("image/jpeg", 0.7);
+  return { forAi, photo, thumb };
+}
+
+// ---------- AI (Claude via the viewer's plan) ----------
+const CAR_FIELDS = `"name": string (collector name of the casting, e.g. "'71 Datsun 510"),
+"make": string|null (real car maker), "model": string|null,
+"brand": string|null (diecast brand, e.g. "Hot Wheels", "Matchbox", "Mini GT", "Tomica"),
+"series": string|null (line / sub-series), "year": number|null (release year of the diecast, not the real car),
+"scale": string|null (e.g. "1:64"), "color": string|null, "castingNumber": string|null (toy / collector number if visible),
+"packaging": "carded"|"boxed"|"loose"|"unknown", "condition": "mint"|"near_mint"|"good"|"fair"|"poor"|"unknown",
+"flags": string[] (only from: "Treasure Hunt", "Super Treasure Hunt", "Chase", "Limited Edition", "Real Riders", "Error")`;
+const VALUE_FIELDS = `"value": {"estimate": number, "low": number, "high": number, "confidence": "low"|"medium"|"high", "rationale": string (1-2 sentences on what the estimate reflects: typical recent selling prices, packaging, condition, rarity)}`;
+
+function identifyPrompt(currency, hint) {
+  return `You are the identification engine of "Diecast Collectors", an app for diecast and scale-model car collectors.
+Identify the exact diecast release in the attached photo as precisely as a veteran collector would. Use every clue: blister-card art and text, series name and number, toy/collector numbers, the base (casting name, year stamp), wheel type, tampo/livery, colour and packaging. Distinguish the diecast release year from the real car's year. Fill fields you can reasonably infer; use null only when there is no basis. Set condition to "unknown" unless it is clear from the photo. Flag Treasure Hunts (flame logo), Super Treasure Hunts (Spectraflame paint + Real Riders + "TH" tampo), chases and limited editions only when the evidence supports it. Be honest in confidence: 0.9+ only when card text or base markings confirm the release. If the photo does not show a model vehicle, set isDiecast to false.
+Also estimate its typical current market value in ${currency} from your knowledge of collector prices for this release in this packaging and condition. Give a realistic low-high range.${hint ? `\nCollector's hint: ${hint}` : ""}
+
+Reply with only one JSON object:
+{"isDiecast": boolean, ${CAR_FIELDS},
+"description": string (1-3 sentences for a collector), "confidence": number 0..1, "evidence": string,
+"alternatives": up to 3 of {"name": string, "brand": string|null, "series": string|null, "year": number|null, "color": string|null},
+${VALUE_FIELDS}}`;
+}
+
+function describeCar(c) {
+  return [["Name", c.name], ["Real car", [c.make, c.model].filter(Boolean).join(" ")], ["Brand", c.brand], ["Series", c.series], ["Release year", c.year], ["Scale", c.scale], ["Colour", c.color], ["Toy/casting number", c.castingNumber], ["Packaging", c.packaging !== "unknown" ? c.packaging : ""], ["Condition", c.condition !== "unknown" ? c.condition : ""], ["Special", (c.flags || []).join(", ")]]
+    .filter(([, v]) => v !== null && v !== undefined && v !== "").map(([k, v]) => `- ${k}: ${v}`).join("\n");
+}
+
+const str = (v) => (typeof v === "string" && v.trim() ? v.trim().slice(0, 200) : null);
+const num = (v) => (typeof v === "number" && Number.isFinite(v) ? v : typeof v === "string" && v.trim() && Number.isFinite(+v) ? +v : null);
+function cleanDetails(o) {
+  o = o || {};
+  return {
+    name: str(o.name) || "Unknown diecast", make: str(o.make), model: str(o.model), brand: str(o.brand), series: str(o.series),
+    year: num(o.year) ? Math.round(num(o.year)) : null, scale: str(o.scale), color: str(o.color), castingNumber: str(o.castingNumber),
+    packaging: PACKAGING[o.packaging] ? o.packaging : "unknown", condition: CONDITION[o.condition] ? o.condition : "unknown",
+    flags: Array.isArray(o.flags) ? o.flags.filter((f) => FLAGS.includes(f)) : [],
+  };
+}
+function cleanValue(v, currency) {
+  if (!v) return null;
+  const est = num(v.estimate);
+  if (est === null || est < 0) return null;
+  const r = (n) => Math.round(Math.max(0, n) * 100) / 100;
+  const low = num(v.low), high = num(v.high);
+  return {
+    estimate: r(est), low: r(Math.min(low ?? est, est)), high: r(Math.max(high ?? est, est)),
+    confidence: ["low", "medium", "high"].includes(v.confidence) ? v.confidence : "low",
+    rationale: str(v.rationale) || "", currency, checkedAt: nowIso(), source: "ai",
+  };
+}
+
+const AI_ERRORS = {
+  not_granted: "Claude access wasn't allowed for this page. Reload and choose Allow to scan.",
+  sampling_disabled: "Claude isn't available on this account.",
+  rate_limited: "You've hit your Claude usage limit for now. Try again a bit later.",
+  session_expired: "Please sign in to Claude again.",
+  image_rejected: "That photo couldn't be read. Try another one (JPEG or PNG).",
+  refused: "Claude couldn't help with that photo. Try a different one.",
+  invalid_json: "Claude's answer came back garbled. Tap Try again.",
+  images_unavailable: "Photo scanning isn't available in this view. Type the car's name instead.",
+};
+const aiError = (e) => AI_ERRORS[e?.code] || (e?.message && !e.code ? e.message : "Something went wrong reaching Claude. Try again.");
+
+async function aiIdentify(blob, hint) {
+  const out = await sampleFn.json(identifyPrompt(state.currency, hint), { images: blob, modelTier: "default", cache: false });
+  return {
+    isDiecast: out?.isDiecast !== false,
+    details: cleanDetails(out),
+    description: str(out?.description),
+    confidence: Math.min(1, Math.max(0, num(out?.confidence) ?? 0.5)),
+    alternatives: (Array.isArray(out?.alternatives) ? out.alternatives : []).slice(0, 3).map((a) => ({ name: str(a?.name) || "?", brand: str(a?.brand), series: str(a?.series), year: num(a?.year), color: str(a?.color) })),
+    market: cleanValue(out?.value, state.currency),
+  };
+}
+async function aiIdentifyFromText(text) {
+  const prompt = identifyPrompt(state.currency).replace("in the attached photo", "described by the collector below").replace("If the photo does not show a model vehicle, set isDiecast to false.", "") + `\n\nCollector's description: ${text}`;
+  const out = await sampleFn.json(prompt, { modelTier: "default", cache: false });
+  return { isDiecast: true, details: cleanDetails(out), description: str(out?.description), confidence: Math.min(1, Math.max(0, num(out?.confidence) ?? 0.5)), alternatives: [], market: cleanValue(out?.value, state.currency) };
+}
+async function aiEstimate(cars) {
+  const list = cars.map((c, i) => `#${i + 1} (${c.currency})\n${describeCar(c)}`).join("\n\n");
+  const out = await sampleFn.json(`You price diecast cars for collectors. For each car below, estimate its typical current market value in the currency shown, from your knowledge of collector prices for that release, packaging and condition.
+Reply with only a JSON array with one object per car, in order: [{"n": number, ${VALUE_FIELDS.replace('"value": ', '"value": ')}}]
+
+${list}`, { modelTier: "default", cache: false });
+  const arr = Array.isArray(out) ? out : [];
+  return cars.map((c, i) => cleanValue((arr.find((x) => num(x?.n) === i + 1) ?? arr[i])?.value, c.currency));
+}
+
+// ---------- UI primitives ----------
+let toastTimer = null;
+function toast(msg) {
+  let t = $("#toast");
+  if (!t) { t = document.createElement("div"); t.id = "toast"; t.className = "toast"; t.setAttribute("role", "status"); document.body.append(t); }
+  t.textContent = msg; t.hidden = false;
+  clearTimeout(toastTimer); toastTimer = setTimeout(() => { t.hidden = true; }, 3200);
+}
+function confirmBox(title, body, action, onYes) {
+  state.modal = { title, body, action, onYes };
+  render();
+}
+const carPhotoHtml = (src, cls) => src ? `<img class="${cls}" src="${esc(src)}" alt="">` : `<div class="${cls} thumb empty">${I.car}</div>`;
+const confColor = { low: "var(--down)", medium: "var(--gold)", high: "var(--up)" };
+
+function chartHtml(series, fmt) {
+  const vis = series.filter((s) => s.points.length);
+  if (!vis.some((s) => s.points.length > 1)) return `<p class="dim">${vis.length ? "History builds up as values change over time." : "No value history yet."}</p>`;
+  const W = 520, H = 180, P = { t: 12, r: 12, b: 22, l: 52 };
+  const all = vis.flatMap((s) => s.points);
+  let t0 = Math.min(...all.map((p) => +new Date(p.date))), t1 = Math.max(...all.map((p) => +new Date(p.date)));
+  if (t0 === t1) { t0 -= 864e5; t1 += 864e5; }
+  let v0 = Math.min(...all.map((p) => p.value)), v1 = Math.max(...all.map((p) => p.value));
+  const pad = (v1 - v0) * 0.15 || Math.max(1, v1 * 0.2); v0 = Math.max(0, v0 - pad); v1 += pad;
+  const x = (d) => P.l + ((+new Date(d) - t0) / (t1 - t0)) * (W - P.l - P.r);
+  const y = (v) => P.t + (H - P.t - P.b) - ((v - v0) / (v1 - v0)) * (H - P.t - P.b);
+  const ticks = [v0, (v0 + v1) / 2, v1];
+  const day = (d) => new Date(d).toLocaleDateString(undefined, { month: "short", day: "numeric", timeZone: d.length === 10 ? "UTC" : undefined });
+  const paths = vis.map((s, i) => {
+    const d = s.points.map((p, j) => `${j ? "L" : "M"}${x(p.date).toFixed(1)},${y(p.value).toFixed(1)}`).join(" ");
+    const last = s.points[s.points.length - 1];
+    const area = i === 0 && !s.dashed ? `<path d="${d} L${x(last.date).toFixed(1)},${H - P.b} L${x(s.points[0].date).toFixed(1)},${H - P.b} Z" fill="${s.color}" fill-opacity=".1"/>` : "";
+    return `${area}<path d="${d}" fill="none" stroke="${s.color}" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" ${s.dashed ? 'stroke-dasharray="6 5"' : ""}/><circle cx="${x(last.date)}" cy="${y(last.value)}" r="4" fill="${s.color}" stroke="var(--surface)" stroke-width="2"/>`;
+  }).join("");
+  const data = esc(JSON.stringify({ series: vis.map((s) => ({ label: s.label, color: s.color, points: s.points })), t0, t1, W, P }));
+  return `${vis.length > 1 ? `<div class="legend">${vis.map((s) => `<span><i style="background:${s.color}"></i>${esc(s.label)}</span>`).join("")}</div>` : ""}
+  <div class="chart" data-chart="${data}">
+    <svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" role="img" aria-label="${esc(vis.map((s) => s.label + ": latest " + fmt(s.points[s.points.length - 1].value)).join(". "))}">
+      ${ticks.map((t) => `<line x1="${P.l}" x2="${W - P.r}" y1="${y(t)}" y2="${y(t)}" stroke="var(--grid)" stroke-width="1" vector-effect="non-scaling-stroke"/><text x="${P.l - 6}" y="${y(t) + 3}" text-anchor="end" font-size="10" fill="var(--dim)">${esc(fmt(t))}</text>`).join("")}
+      <text x="${P.l}" y="${H - 6}" font-size="10" fill="var(--dim)">${day(new Date(t0).toISOString())}</text>
+      <text x="${W - P.r}" y="${H - 6}" font-size="10" fill="var(--dim)" text-anchor="end">${day(new Date(t1).toISOString())}</text>
+      ${paths}
+      <line class="cross" x1="0" x2="0" y1="${P.t}" y2="${H - P.b}" stroke="var(--dim)" stroke-width="1" vector-effect="non-scaling-stroke" visibility="hidden"/>
+    </svg>
+    <div class="tip" hidden></div>
+  </div>`;
+}
+function wireCharts(fmt) {
+  document.querySelectorAll("[data-chart]").forEach((el) => {
+    const cfg = JSON.parse(el.dataset.chart);
+    const svg = el.querySelector("svg"), cross = el.querySelector(".cross"), tip = el.querySelector(".tip");
+    const move = (ev) => {
+      const r = svg.getBoundingClientRect();
+      const px = ((ev.clientX - r.left) / r.width) * cfg.W;
+      const tAt = cfg.t0 + ((px - cfg.P.l) / (cfg.W - cfg.P.l - cfg.P.r)) * (cfg.t1 - cfg.t0);
+      const rows = cfg.series.map((s) => ({ s, p: s.points.reduce((a, b) => Math.abs(+new Date(b.date) - tAt) < Math.abs(+new Date(a.date) - tAt) ? b : a) }));
+      const anchor = rows.reduce((a, b) => Math.abs(+new Date(b.p.date) - tAt) < Math.abs(+new Date(a.p.date) - tAt) ? b : a);
+      const ax = cfg.P.l + ((+new Date(anchor.p.date) - cfg.t0) / (cfg.t1 - cfg.t0)) * (cfg.W - cfg.P.l - cfg.P.r);
+      cross.setAttribute("x1", ax); cross.setAttribute("x2", ax); cross.setAttribute("visibility", "visible");
+      tip.hidden = false;
+      tip.innerHTML = `<div class="dim">${esc(new Date(anchor.p.date).toLocaleDateString())}</div>` + rows.map(({ s, p }) => `<div><span style="color:${s.color}">●</span> ${esc(s.label)}: <b class="num">${esc(fmt(p.value))}</b></div>`).join("");
+      const left = (ax / cfg.W) * r.width;
+      tip.style.left = left > r.width / 2 ? "" : left + 8 + "px";
+      tip.style.right = left > r.width / 2 ? r.width - left + 8 + "px" : "";
+    };
+    const leave = () => { cross.setAttribute("visibility", "hidden"); tip.hidden = true; };
+    svg.addEventListener("pointermove", move); svg.addEventListener("pointerdown", move);
+    svg.addEventListener("pointerleave", leave); svg.addEventListener("pointerup", (e) => { if (e.pointerType !== "mouse") setTimeout(leave, 1500); });
+  });
+}
+
+// ---------- views ----------
+function syncPill() {
+  if (state.storage === "cloud") return `<div class="sync-pill" title="Saved to your Claude account"><span class="dot"></span>Saved</div>`;
+  if (state.storage === "local") return `<div class="sync-pill" title="Saved in this browser only"><span class="dot warn"></span>This device</div>`;
+  return `<div class="sync-pill">Connecting…</div>`;
+}
+
+function garageView() {
+  const cur = state.currency, t = totals(state.cars), ch = monthChange(state.cars);
+  const brands = [...new Set(state.cars.map((c) => c.brand).filter(Boolean))].sort();
+  const q = state.query.trim().toLowerCase();
+  let list = state.cars.filter((c) => (state.filter === "all" || c.status === state.filter) && (!state.brand || c.brand === state.brand) &&
+    (!q || [c.name, c.brand, c.series, c.make, c.model, c.color, c.castingNumber, c.year].filter(Boolean).some((f) => String(f).toLowerCase().includes(q))));
+  const cmp = { recent: (a, b) => b.createdAt.localeCompare(a.createdAt), value: (a, b) => effectiveValue(b) - effectiveValue(a), name: (a, b) => a.name.localeCompare(b.name), gain: (a, b) => (gainOf(b)?.amount ?? -1e12) - (gainOf(a)?.amount ?? -1e12) };
+  list = list.sort(cmp[state.sort]);
+  const sortLabel = { recent: "Recent", value: "Value", name: "A–Z", gain: "Gain" }[state.sort];
+  return `
+  <header class="brand"><div class="logo">${I.car}</div><div class="brand-name">Diecast Collectors</div>${syncPill()}</header>
+  <section class="hero">
+    <div class="label">Collection value</div>
+    <div class="hero-value num">${money(t.value, cur)}</div>
+    <div class="row">${ch && ch.amount !== 0 ? `<span class="delta ${ch.amount > 0 ? "up" : "down"}">${ch.amount > 0 ? I.up : I.down} ${money(Math.abs(ch.amount), cur)}${pct(ch.pct)}</span><span class="dim">30 days</span>` : `<span class="dim">Scale 1:64 and up. Every car you add is tracked from day one.</span>`}</div>
+    <div class="stats num"><div class="stat"><b>${t.owned}</b><span>Cars</span></div><div class="stat"><b>${money(t.invested, cur)}</b><span>Invested</span></div><div class="stat"><b>${t.wishlist}</b><span>Wishlist</span></div></div>
+  </section>
+  ${state.cars.length ? `
+  <label class="search">${I.search.replace("<svg", '<svg width="18" height="18" style="color:var(--dim)"')}<input id="q" type="search" placeholder="Search name, brand, series, year…" value="${esc(state.query)}" aria-label="Search your cars"></label>
+  <div class="chips-scroll">
+    ${["all", "owned", "wishlist"].map((f) => `<button class="chip ${state.filter === f ? "on" : ""}" data-filter="${f}">${{ all: "All", owned: "Garage", wishlist: "Wishlist" }[f]}</button>`).join("")}
+    ${brands.map((b) => `<button class="chip ${state.brand === b ? "on" : ""}" data-brand="${esc(b)}">${esc(b)}</button>`).join("")}
+  </div>
+  <div class="between"><span class="dim">${list.length} ${list.length === 1 ? "car" : "cars"}</span><button class="chip" id="sortBtn" aria-label="Change sort order">Sort: ${sortLabel}</button></div>
+  ${list.length ? `<div class="grid">${list.map(carCard).join("")}</div>` : `<div class="empty-state"><p class="muted">No cars match that search.</p></div>`}` :
+  `<div class="empty-state">
+     <div class="empty-icon" style="color:var(--red)">${I.scan}</div>
+     <h2 style="font-family:var(--display);font-size:28px;text-transform:uppercase">Start your garage</h2>
+     <p class="muted" style="max-width:34ch">Photograph a diecast car, loose or carded. Claude identifies the release, fills in the details and estimates what it's worth.</p>
+     <button class="btn" data-act="scan">${I.camera.replace("<svg", '<svg width="20" height="20"')} Scan your first car</button>
+     <button class="btn ghost" data-act="manual">Add a car by name</button>
+   </div>`}`;
+}
+function carCard(c) {
+  const g = gainOf(c), v = effectiveValue(c);
+  const special = (c.flags || []).find((f) => /treasure|chase|limited/i.test(f));
+  return `<button class="car" data-open="${esc(c.id)}" aria-label="${esc(c.name)}, ${esc(money(v, c.currency))}">
+    <div class="car-wrap">${c.thumb ? `<img class="thumb" src="${esc(c.thumb)}" alt="" loading="lazy">` : `<div class="thumb empty">${I.car}</div>`}
+      ${c.status === "wishlist" ? `<span class="badge wish">Wishlist</span>` : special ? `<span class="badge">${esc(special.replace("Super Treasure Hunt", "STH"))}</span>` : ""}</div>
+    <div class="car-body"><div class="car-name">${esc(c.name)}</div><div class="car-meta">${esc([c.brand, c.year].filter(Boolean).join(" · ") || " ")}</div>
+      <div class="car-value num">${v ? money(v, c.currency) : "—"} ${g && g.amount ? `<span style="color:${g.amount > 0 ? "var(--up)" : "var(--down)"}">${g.amount > 0 ? I.up : I.down}</span>` : ""}</div></div>
+  </button>`;
+}
+
+function insightsView() {
+  const cur = state.currency, owned = state.cars.filter((c) => c.status === "owned"), t = totals(state.cars);
+  if (!owned.length) return `<h1 class="title">Insights</h1><div class="empty-state"><div class="empty-icon" style="color:var(--gold)">${I.chart}</div><p class="muted">Add cars to your garage to see how your collection's value moves.</p></div>`;
+  const top = [...owned].sort((a, b) => effectiveValue(b) - effectiveValue(a)).slice(0, 5);
+  const movers = owned.map((c) => ({ c, g: gainOf(c) })).filter((x) => x.g && x.g.amount).sort((a, b) => b.g.amount - a.g.amount);
+  const shown = [...movers.slice(0, 3), ...movers.slice(3).slice(-3)];
+  const brands = [...owned.reduce((m, c) => { const k = c.brand || "Other"; const e = m.get(k) || { n: 0, v: 0 }; m.set(k, { n: e.n + 1, v: e.v + effectiveValue(c) }); return m; }, new Map())].sort((a, b) => b[1].v - a[1].v);
+  const maxB = Math.max(1, ...brands.map(([, v]) => v.v));
+  const row = (c, right, sub, color, rank) => `<button class="list-row" data-open="${esc(c.id)}">${rank ? `<b class="dim" style="width:14px">${rank}</b>` : ""}<div class="grow"><div class="car-name">${esc(c.name)}</div><div class="car-meta">${esc([c.brand, c.year].filter(Boolean).join(" · "))}</div></div><div style="text-align:right"><b class="num" style="color:${color || "var(--fg)"}">${right}</b>${sub ? `<div class="dim">${sub}</div>` : ""}</div></button>`;
+  return `<h1 class="title">Insights</h1>
+  <section class="card"><div class="label">Collection value</div><div class="headline num">${money(t.value, cur)}</div>
+    ${chartHtml([{ label: "Collection", color: "var(--chart-market)", points: collectionSeries(state.cars) }], (n) => money(n, cur, true))}</section>
+  <div class="tiles num">
+    <div class="tile"><b>${t.owned}</b><span>Cars owned</span></div><div class="tile"><b>${t.wishlist}</b><span>Wishlist</span></div>
+    <div class="tile"><b>${money(t.invested, cur)}</b><span>Invested</span></div><div class="tile"><b>${money(t.market, cur)}</b><span>AI estimates</span></div>
+    <div class="tile"><b>${money(t.mine, cur)}</b><span>My valuations</span></div>
+    <div class="tile"><b style="color:${t.gain > 0 ? "var(--up)" : t.gain < 0 ? "var(--down)" : "var(--fg)"}">${t.gain >= 0 ? "+" : "−"}${money(Math.abs(t.gain), cur)}</b><span>Unrealised gain</span></div>
+  </div>
+  ${sampleFn ? `<button class="btn secondary" id="estimateAll" ${state.busyAll ? "disabled" : ""}>${I.refresh.replace("<svg", '<svg width="18" height="18"')} ${state.busyAll ? "Updating estimates…" : "Update all estimates"}</button>
+  <p class="dim" style="margin-top:-8px">One Claude request per 25 cars. Estimates come from Claude's knowledge of collector prices, not live listings.</p>` : ""}
+  <section class="card"><div class="label">Most valuable</div>${top.map((c, i) => row(c, money(effectiveValue(c), c.currency), "", null, i + 1)).join("")}</section>
+  ${shown.length ? `<section class="card"><div class="label">Gain vs. what you paid</div>${shown.map(({ c, g }) => row(c, (g.amount >= 0 ? "+" : "−") + money(Math.abs(g.amount), c.currency), g.pct !== null ? pct(g.pct).replace(/[()]/g, "").trim() : "", g.amount >= 0 ? "var(--up)" : "var(--down)")).join("")}</section>` : ""}
+  <section class="card"><div class="label">By brand</div>${brands.map(([b, v]) => `<div style="display:grid;gap:6px;padding:6px 0"><div class="between"><span><b>${esc(b)}</b> <span class="dim">· ${v.n}</span></span><b class="num">${money(v.v, cur)}</b></div><div class="bar-track"><div class="bar" style="width:${Math.max(2, (v.v / maxB) * 100)}%"></div></div></div>`).join("")}</section>`;
+}
+
+function settingsView() {
+  const where = state.storage === "cloud"
+    ? `<div class="row"><span class="dot"></span><b>Saved to your Claude account</b></div><p class="dim">Your cars, photos, prices, value history and what you paid are stored with this page on claude.ai. On a new phone, open this same link while signed in to Claude and everything is there.</p>`
+    : `<div class="row"><span class="dot warn"></span><b>Saved on this device only</b></div><p class="dim">Account storage isn't available in this view, so your garage is kept in this browser. Open the page from the Claude app or claude.ai while signed in to keep it in your account.</p>`;
+  return `<h1 class="title">Settings</h1>
+  <section class="card"><div class="label">Your data</div>${where}</section>
+  <section class="card"><div class="label">Currency</div><div class="wrap">${CURRENCIES.map((c) => `<button class="chip ${state.currency === c ? "on" : ""}" data-currency="${c}">${c}</button>`).join("")}</div>
+    <p class="dim">New scans are valued in this currency. Existing cars keep the currency they were added in.</p></section>
+  <section class="card"><div class="label">AI</div>
+    <p class="dim">${sampleFn ? (state.aiImages ? "Scanning uses Claude on your own Claude plan. No API key, no card, no extra bill. The first scan asks you to allow it." : "Claude is available here but can't see photos in this view, so add cars by name.") : "Claude isn't available in this view. Open the page on claude.ai to scan cars."}</p></section>
+  <section class="card"><div class="label">Add without scanning</div><button class="btn secondary block" data-act="manual">Add a car by name</button></section>
+  <section class="card"><div class="label">Backup file</div>
+    <p class="dim">An extra copy you keep yourself (details and prices, not photos).</p>
+    <div class="two"><button class="btn secondary" id="exportBtn">Export</button><button class="btn secondary" id="importBtn">Import</button></div></section>
+  <div class="empty-state" style="padding:8px"><div class="logo" style="width:46px;height:46px;border-radius:12px">${I.car}</div><b>Diecast Collectors</b><span class="dim">Scan it. Know it. Track it.</span></div>`;
+}
+
+// ---------- sheets ----------
+function scanSheet(s) {
+  if (s.phase === "working") {
+    return `<div class="sheet-bar"><button class="icon-btn" data-act="closeSheet" aria-label="Cancel">${I.close}</button><h2>Scanning</h2></div>
+      ${s.photo ? `<img class="photo" src="${esc(s.photo)}" alt="Your photo" style="max-width:320px;margin:0 auto">` : ""}
+      <div class="spinner" style="margin:8px auto"></div>
+      <div class="steps">${["Identifying the car", "Reading card and base details", "Estimating its value"].map((t, i) => `<div class="step ${i < s.step ? "done" : i === s.step ? "on" : ""}"><i></i>${t}…</div>`).join("")}</div>
+      <p class="dim" style="text-align:center">Usually 10–40 seconds. The first scan asks you to allow Claude.</p>`;
+  }
+  if (s.phase === "error") {
+    return `<div class="sheet-bar"><button class="icon-btn" data-act="closeSheet" aria-label="Close">${I.close}</button><h2>Scan</h2></div>
+      <div class="empty-state"><h2>Couldn't identify this one</h2><p class="muted">${esc(s.error)}</p></div>
+      <div style="display:grid;gap:8px">${s.canRetry ? `<button class="btn" data-act="retryScan">Try again</button>` : ""}<button class="btn ghost" data-act="rescan">Use a different photo</button><button class="btn ghost" data-act="manual">Add by name instead</button></div>`;
+  }
+  if (s.phase === "notcar") {
+    return `<div class="sheet-bar"><button class="icon-btn" data-act="closeSheet" aria-label="Close">${I.close}</button><h2>Scan</h2></div>
+      ${s.photo ? `<img class="photo" src="${esc(s.photo)}" alt="Your photo">` : ""}
+      <div class="empty-state"><h2>No diecast car found</h2><p class="muted">Try a closer shot with the car, or its card, filling the frame in good light.</p></div>
+      <div style="display:grid;gap:8px"><button class="btn" data-act="rescan">Take another photo</button><button class="btn ghost" data-act="manual">Add by name instead</button></div>`;
+  }
+  // review
+  const d = s.details, cur = state.currency;
+  const facts = [["Brand", d.brand], ["Series", d.series], ["Year", d.year], ["Scale", d.scale], ["Colour", d.color], ["Toy #", d.castingNumber], ["Packaging", d.packaging !== "unknown" ? PACKAGING[d.packaging] : null], ["Condition", d.condition !== "unknown" ? CONDITION[d.condition] : null]].filter(([, v]) => v);
+  return `<div class="sheet-bar"><button class="icon-btn" data-act="closeSheet" aria-label="Discard">${I.close}</button><h2>Scan result</h2></div>
+    ${s.photo ? `<div class="photo-wrap"><img class="photo" src="${esc(s.photo)}" alt=""><span class="match">${s.confidence !== null ? Math.round(s.confidence * 100) + "% match" : ""}</span></div>` : ""}
+    ${s.confidence !== null && s.confidence < 0.5 ? `<div class="warn-box">Not sure about this one. Check the details or pick another match below.</div>` : ""}
+    <div style="display:grid;gap:6px"><h1 class="title">${esc(d.name)}</h1>
+      ${d.make || d.model ? `<div class="muted">${esc([d.make, d.model].filter(Boolean).join(" "))}</div>` : ""}
+      ${d.flags.length ? `<div class="wrap">${d.flags.map((f) => `<span class="chip gold">${esc(f)}</span>`).join("")}</div>` : ""}
+      ${s.description ? `<p class="muted" style="margin:0">${esc(s.description)}</p>` : ""}</div>
+    ${facts.length ? `<section class="card"><div class="facts">${facts.map(([k, v]) => `<div class="fact"><span class="label">${k}</span><b>${esc(v)}</b></div>`).join("")}</div></section>` : ""}
+    ${marketCard(s.market, cur, false)}
+    <section class="card"><div class="label">Your numbers (optional)</div>
+      <div class="two"><label class="field"><span class="dim">My value</span><div class="money"><span>${cur}</span><input id="rvMine" inputmode="decimal" placeholder="0.00" value="${esc(s.myValue ?? "")}"></div></label>
+      <label class="field"><span class="dim">Purchase price</span><div class="money"><span>${cur}</span><input id="rvPaid" inputmode="decimal" placeholder="0.00" value="${esc(s.purchase ?? "")}"></div></label></div>
+      <p class="dim">My value is your own valuation. When it's set, it's the headline value in your garage.</p></section>
+    <div class="segment" role="group" aria-label="Where it goes">${["owned", "wishlist"].map((k) => `<button data-status="${k}" class="${s.status === k ? "on" : ""}">${k === "owned" ? "In my Garage" : "Wishlist"}</button>`).join("")}</div>
+    ${s.alternatives.length ? `<div style="display:grid;gap:8px"><div class="label">Not quite? Other possible matches</div>${s.alternatives.map((a, i) => `<button class="alt" data-alt="${i}"><div style="flex:1;min-width:0"><b>${esc(a.name)}</b><div class="dim">${esc([a.brand, a.series, a.year, a.color].filter(Boolean).join(" · "))}</div></div><span class="dim">Swap</span></button>`).join("")}</div>` : ""}
+    <div class="footer"><div class="footer-inner"><button class="btn block" data-act="saveScan">${s.status === "owned" ? "Add to Garage" : "Add to Wishlist"}</button>
+      <div class="two"><button class="btn ghost" data-act="editScan">${I.edit.replace("<svg", '<svg width="18" height="18"')} Edit details</button><button class="btn ghost" data-act="rescan">${I.camera.replace("<svg", '<svg width="18" height="18"')} Retake</button></div></div></div>`;
+}
+
+function marketCard(m, cur, canRefresh, busy) {
+  return `<section class="card"><div class="between"><div class="label">Estimated value</div>${canRefresh && sampleFn ? `<button class="icon-btn" data-act="reestimate" aria-label="Re-estimate value" ${busy ? "disabled" : ""}>${busy ? '<div class="spinner" style="width:18px;height:18px;border-width:2px"></div>' : I.refresh}</button>` : ""}</div>
+    ${m ? `<div class="estimate num">${money(m.estimate, m.currency || cur)}</div>
+      <div class="row wrap"><span class="muted num">Range ${money(m.low, m.currency || cur)} – ${money(m.high, m.currency || cur)}</span><span class="conf" style="color:${confColor[m.confidence]};border-color:${confColor[m.confidence]}">${m.confidence} confidence</span></div>
+      ${m.rationale ? `<p class="muted" style="margin:0;font-size:14px">${esc(m.rationale)}</p>` : ""}
+      <p class="dim" style="margin:0">Claude's estimate from what it knows of collector prices, not live listings · ${ago(m.checkedAt)}</p>`
+    : `<p class="muted" style="margin:0">${busy ? "Estimating…" : "No estimate yet." + (canRefresh && sampleFn ? " Tap ↻ to ask Claude." : "")}</p>`}</section>`;
+}
+
+function detailSheet(s) {
+  const c = state.cars.find((x) => x.id === s.id);
+  if (!c) return `<div class="sheet-bar"><button class="icon-btn" data-act="closeSheet" aria-label="Back">${I.back}</button></div><p class="muted">This car is no longer in your garage.</p>`;
+  const cur = c.currency, g = gainOf(c), photo = photoCache.get(c.id) || c.thumb;
+  const details = [["Brand", c.brand], ["Series", c.series], ["Release year", c.year], ["Real car", [c.make, c.model].filter(Boolean).join(" ")], ["Scale", c.scale], ["Colour", c.color], ["Toy / casting #", c.castingNumber], ["Packaging", c.packaging !== "unknown" ? PACKAGING[c.packaging] : ""], ["Condition", c.condition !== "unknown" ? CONDITION[c.condition] : ""]].filter(([, v]) => v);
+  const editing = s.editing;
+  return `<div class="sheet-bar"><button class="icon-btn" data-act="closeSheet" aria-label="Back">${I.back}</button><h2></h2>
+      <button class="icon-btn" data-act="editCar" aria-label="Edit details">${I.edit}</button><button class="icon-btn" data-act="deleteCar" aria-label="Delete" style="color:var(--down)">${I.trash}</button></div>
+    ${photo ? `<img class="photo" src="${esc(photo)}" alt="">` : `<div class="photo thumb empty">${I.car}</div>`}
+    <div style="display:grid;gap:6px"><h1 class="title">${esc(c.name)}</h1><div class="muted">${esc([c.brand, c.series, c.year].filter(Boolean).join(" · "))}</div>
+      <div class="wrap"><button class="chip ${c.status === "wishlist" ? "on" : ""}" data-act="toggleStatus">${c.status === "owned" ? "In my Garage" : "Wishlist"}</button>${(c.flags || []).map((f) => `<span class="chip gold">${esc(f)}</span>`).join("")}</div></div>
+    <section class="card" style="gap:12px"><div class="label">${c.myValue !== null && c.myValue !== undefined ? "My value" : "Value"}</div>
+      <div class="headline num">${money(effectiveValue(c) || null, cur)}</div>
+      ${g ? `<span class="delta ${g.amount >= 0 ? "up" : "down"}">${g.amount >= 0 ? I.up : I.down} ${money(Math.abs(g.amount), cur)}${pct(g.pct)} vs. what you paid</span>` : ""}
+      <div class="cells num">
+        <button class="cell ${c.myValue == null ? "set" : ""}" data-edit="myValue"><span class="dim">My value ✎</span><b>${c.myValue != null ? money(c.myValue, cur) : "Set"}</b></button>
+        <div class="cell"><span class="dim">Estimate</span><b>${c.market ? money(c.market.estimate, cur) : "—"}</b></div>
+        <button class="cell ${c.purchasePrice == null ? "set" : ""}" data-edit="purchasePrice"><span class="dim">Paid ✎</span><b>${c.purchasePrice != null ? money(c.purchasePrice, cur) : "Set"}</b></button>
+      </div>
+      ${editing ? `<div style="display:grid;gap:8px"><span class="dim">${editing === "myValue" ? "Your valuation" : "What you paid"}</span>
+        <div class="money"><span>${cur}</span><input id="inlineMoney" inputmode="decimal" placeholder="0.00" value="${esc(c[editing] ?? "")}"></div>
+        <div class="two"><button class="btn ghost" data-act="cancelInline">Cancel</button><button class="btn" data-act="saveInline">Save</button></div></div>` : ""}
+      ${chartHtml([
+        { label: "Estimate", color: "var(--chart-market)", points: (c.valueHistory || []).map((p) => ({ date: p.date, value: p.estimate })) },
+        { label: "My value", color: "var(--chart-mine)", dashed: true, points: (c.myValueHistory || []).map((p) => ({ date: p.date, value: p.value })) },
+      ], (n) => money(n, cur, true))}
+    </section>
+    ${marketCard(c.market, cur, true, s.busy)}
+    <section class="card"><div class="label">Details</div>
+      ${details.map(([k, v]) => `<div class="kv"><span class="dim">${k}</span><span>${esc(v)}</span></div>`).join("")}
+      ${c.description ? `<p class="muted" style="margin:0">${esc(c.description)}</p>` : ""}
+      ${c.notes ? `<div class="label" style="margin-top:6px">Notes</div><p class="muted" style="margin:0">${esc(c.notes)}</p>` : ""}
+      <button class="btn ghost" data-act="editCar">Edit details</button></section>`;
+}
+
+function editSheet(s) {
+  const f = s.form;
+  const input = (id, label, ph, extra = "") => `<label class="field"><span class="label">${label}</span><input id="${id}" value="${esc(f[id] ?? "")}" placeholder="${esc(ph)}" ${extra}></label>`;
+  const opts = (key, map) => `<div class="field"><span class="label">${key === "packaging" ? "Packaging" : "Condition"}</span><div class="wrap">${Object.entries(map).map(([k, v]) => `<button class="chip ${f[key] === k ? "on" : ""}" data-opt="${key}:${k}">${v}</button>`).join("")}</div></div>`;
+  return `<div class="sheet-bar"><button class="icon-btn" data-act="closeEdit" aria-label="Cancel">${I.close}</button><h2>${s.mode === "manual" ? "Add a car" : "Edit details"}</h2></div>
+    ${s.mode === "manual" && sampleFn ? `<section class="card"><div class="label">Quick add</div><p class="dim" style="margin:0">Type what you know and Claude fills in the rest, value included.</p>
+      <label class="field"><input id="quickText" placeholder="e.g. Hot Wheels Car Culture '71 Datsun 510 blue, carded" value="${esc(s.quick || "")}"></label>
+      <button class="btn secondary" data-act="quickFill" ${s.quickBusy ? "disabled" : ""}>${s.quickBusy ? "Asking Claude…" : "Fill in with Claude"}</button></section>` : ""}
+    ${input("name", "Name", "'71 Datsun 510")}
+    <div class="field">${input("brand", "Brand", "Hot Wheels")}<div class="chips-scroll">${BRANDS.map((b) => `<button class="chip ${f.brand === b ? "on" : ""}" data-brandpick="${esc(b)}">${b}</button>`).join("")}</div></div>
+    ${input("series", "Series", "Car Culture")}
+    <div class="two">${input("year", "Release year", "2024", 'inputmode="numeric" maxlength="4"')}${input("scale", "Scale", "1:64")}</div>
+    <div class="two">${input("make", "Real car make", "Datsun")}${input("model", "Model", "510")}</div>
+    <div class="two">${input("color", "Colour", "Blue")}${input("castingNumber", "Toy / casting #", "GRJ83")}</div>
+    ${opts("packaging", PACKAGING)}${opts("condition", CONDITION)}
+    <div class="field"><span class="label">Special</span><div class="wrap">${FLAGS.map((x) => `<button class="chip ${f.flags.includes(x) ? "on" : ""}" data-flag="${esc(x)}">${x}</button>`).join("")}</div></div>
+    ${s.mode !== "scan" ? `<label class="field"><span class="label">Notes</span><textarea id="notes" placeholder="Where you found it, trades, etc.">${esc(f.notes || "")}</textarea></label>` : ""}
+    ${s.mode === "manual" ? `<div class="two"><label class="field"><span class="label">My value</span><div class="money"><span>${state.currency}</span><input id="myValue" inputmode="decimal" placeholder="0.00" value="${esc(f.myValue ?? "")}"></div></label><label class="field"><span class="label">Purchase price</span><div class="money"><span>${state.currency}</span><input id="purchasePrice" inputmode="decimal" placeholder="0.00" value="${esc(f.purchasePrice ?? "")}"></div></label></div>` : ""}
+    ${s.error ? `<p style="color:var(--down)">${esc(s.error)}</p>` : ""}
+    <div class="footer"><div class="footer-inner"><div class="two"><button class="btn ghost" data-act="closeEdit">Cancel</button><button class="btn" data-act="saveEdit">${s.mode === "manual" ? "Add car" : "Save"}</button></div></div></div>`;
+}
+
+function modalHtml() {
+  const m = state.modal;
+  return `<div class="modal" role="dialog" aria-modal="true"><div class="modal-box"><h2>${esc(m.title)}</h2><p class="muted" style="margin:0">${esc(m.body)}</p>
+    <div class="two"><button class="btn ghost" data-act="modalNo">Cancel</button><button class="btn" style="background:var(--down)" data-act="modalYes">${esc(m.action)}</button></div></div></div>`;
+}
+
+// ---------- render ----------
+function render() {
+  const scrollY = window.scrollY;
+  const active = document.activeElement?.id, selStart = document.activeElement?.selectionStart;
+  const views = { garage: garageView, insights: insightsView, settings: settingsView };
+  const s = state.sheet;
+  const sheet = s ? `<div class="sheet"><div class="sheet-inner">${s.type === "scan" ? scanSheet(s) : s.type === "detail" ? detailSheet(s) : editSheet(s)}</div></div>` : "";
+  $("#root").innerHTML = `<main class="app">${views[state.view]()}</main>
+  <nav class="tabbar" aria-label="Sections"><div class="tabbar-inner">
+    <button class="tab ${state.view === "garage" ? "on" : ""}" data-view="garage">${I.car}Garage</button>
+    <div class="fab-wrap"><button class="fab" data-act="scan" aria-label="Scan a car">${I.scan}</button></div>
+    <button class="tab ${state.view === "insights" ? "on" : ""}" data-view="insights">${I.chart}Insights</button>
+    <button class="tab ${state.view === "settings" ? "on" : ""}" data-view="settings">${I.gear}Settings</button>
+  </div></nav>${sheet}${state.modal ? modalHtml() : ""}${state.picker ? pickerHtml() : ""}`;
+  document.body.style.overflow = s ? "hidden" : "";
+  wireCharts((n) => money(n, state.currency, true));
+  if (!s) window.scrollTo(0, scrollY);
+  if (active) { const el = document.getElementById(active); if (el) { el.focus(); try { if (selStart != null) el.setSelectionRange(selStart, selStart); } catch {} } }
+}
+
+// ---------- actions ----------
+let pendingPhoto = null;
+function startScan() {
+  if (!sampleFn) { toast("Scanning needs Claude. Open this page on claude.ai while signed in."); return; }
+  if (!state.aiImages) { openManual(); toast("Photo scanning isn't available here. Add the car by name instead."); return; }
+  state.picker = true;
+  render();
+}
+function pickerHtml() {
+  return `<div class="modal" role="dialog" aria-modal="true" aria-label="Add a photo"><div class="modal-box">
+    <h2 style="font-family:var(--display);text-transform:uppercase;font-size:24px">Scan a car</h2>
+    <p class="muted" style="margin:0">Fit the car, or the whole card, in the frame. Good light helps Claude read the card and base.</p>
+    <button class="btn block" data-act="pickCamera">${I.camera.replace("<svg", '<svg width="20" height="20"')} Take photo</button>
+    <button class="btn secondary block" data-act="pickLibrary">${I.photos.replace("<svg", '<svg width="20" height="20"')} Choose from photos</button>
+    <button class="btn ghost block" data-act="pickCancel">Cancel</button></div></div>`;
+}
+async function onPhotoPicked(file) {
+  if (!file) return;
+  state.sheet = { type: "scan", phase: "working", step: 0, photo: null };
+  render();
+  try {
+    pendingPhoto = await preparePhoto(file);
+  } catch (e) {
+    state.sheet = { type: "scan", phase: "error", error: e.message || "That photo couldn't be opened.", canRetry: false };
+    return render();
+  }
+  state.sheet.photo = pendingPhoto.photo;
+  render();
+  runIdentify();
+}
+async function runIdentify() {
+  const s = state.sheet;
+  s.phase = "working"; s.step = 0; render();
+  const timers = [setTimeout(() => { if (state.sheet === s) { s.step = 1; render(); } }, 5000), setTimeout(() => { if (state.sheet === s) { s.step = 2; render(); } }, 12000)];
+  try {
+    const r = await aiIdentify(pendingPhoto.forAi);
+    if (state.sheet !== s) return;
+    if (!r.isDiecast) { s.phase = "notcar"; return render(); }
+    Object.assign(s, { phase: "review", details: r.details, description: r.description, confidence: r.confidence, alternatives: r.alternatives, market: r.market, status: "owned", myValue: "", purchase: "" });
+  } catch (e) {
+    if (state.sheet !== s) return;
+    Object.assign(s, { phase: "error", error: aiError(e), canRetry: !["not_granted", "sampling_disabled", "images_unavailable"].includes(e?.code) });
+  } finally { timers.forEach(clearTimeout); }
+  render();
+}
+function readReviewInputs() {
+  const s = state.sheet;
+  if (s?.type === "scan" && s.phase === "review") { s.myValue = $("#rvMine")?.value ?? s.myValue; s.purchase = $("#rvPaid")?.value ?? s.purchase; }
+}
+async function saveScan() {
+  readReviewInputs();
+  const s = state.sheet, at = nowIso();
+  const myValue = parseAmount(s.myValue), purchasePrice = parseAmount(s.purchase);
+  const car = {
+    ...s.details, id: newId(), status: s.status, createdAt: at, updatedAt: at, description: s.description || null,
+    aiConfidence: s.confidence, currency: state.currency, purchasePrice, myValue, market: s.market || null, notes: null,
+    valueHistory: s.market ? [{ date: at, estimate: s.market.estimate, low: s.market.low, high: s.market.high }] : [],
+    myValueHistory: myValue !== null ? [{ date: at, value: myValue }] : [],
+    thumb: pendingPhoto?.thumb || null, hasPhoto: !!pendingPhoto,
+  };
+  upsertLocal(car);
+  if (pendingPhoto) { photoCache.set(car.id, pendingPhoto.photo); backend.savePhoto(car.id, pendingPhoto.photo).catch(() => toast("Couldn't save the full-size photo. The thumbnail was kept.")); }
+  persistCar(car);
+  pendingPhoto = null;
+  state.sheet = { type: "detail", id: car.id };
+  state.view = "garage";
+  render();
+  toast(car.status === "owned" ? "Added to your garage" : "Added to your wishlist");
+}
+async function openDetail(id) {
+  state.sheet = { type: "detail", id };
+  render();
+  const c = state.cars.find((x) => x.id === id);
+  if (c?.hasPhoto && !photoCache.has(id)) {
+    try { const p = await backend.getPhoto(id); if (p) { photoCache.set(id, p); if (state.sheet?.id === id) render(); } } catch {}
+  }
+}
+async function reestimate() {
+  const s = state.sheet, c = state.cars.find((x) => x.id === s.id);
+  if (!c || s.busy) return;
+  s.busy = true; render();
+  try {
+    const [m] = await aiEstimate([c]);
+    if (!m) throw { message: "Claude didn't return a value. Try again." };
+    const cur = state.cars.find((x) => x.id === c.id);
+    updateCar(c.id, { market: m, valueHistory: sameDayReplace(cur.valueHistory, { date: m.checkedAt, estimate: m.estimate, low: m.low, high: m.high }) });
+  } catch (e) { toast(aiError(e)); }
+  s.busy = false; render();
+}
+async function estimateAll() {
+  const owned = state.cars.filter((c) => c.status === "owned");
+  if (!owned.length || state.busyAll) return;
+  state.busyAll = true; render();
+  let failed = 0;
+  try {
+    for (let i = 0; i < owned.length; i += 25) {
+      const batch = owned.slice(i, i + 25);
+      const values = await aiEstimate(batch);
+      batch.forEach((c, j) => {
+        const m = values[j];
+        if (!m) { failed++; return; }
+        const cur = state.cars.find((x) => x.id === c.id);
+        if (cur) updateCar(c.id, { market: m, valueHistory: sameDayReplace(cur.valueHistory, { date: m.checkedAt, estimate: m.estimate, low: m.low, high: m.high }) });
+      });
+    }
+    toast(failed ? `Updated, but ${failed} car${failed > 1 ? "s" : ""} got no estimate.` : "All estimates updated");
+  } catch (e) { toast(aiError(e)); }
+  state.busyAll = false; render();
+}
+function openManual() {
+  state.sheet = { type: "edit", mode: "manual", form: { name: "", brand: "", series: "", year: "", scale: "1:64", make: "", model: "", color: "", castingNumber: "", packaging: "unknown", condition: "unknown", flags: [], notes: "", myValue: "", purchasePrice: "" } };
+  render();
+}
+function formFromDetails(d, extra = {}) {
+  return { name: d.name || "", brand: d.brand || "", series: d.series || "", year: d.year ? String(d.year) : "", scale: d.scale || "", make: d.make || "", model: d.model || "", color: d.color || "", castingNumber: d.castingNumber || "", packaging: d.packaging, condition: d.condition, flags: [...(d.flags || [])], ...extra };
+}
+function readForm() {
+  const f = state.sheet.form;
+  ["name", "brand", "series", "year", "scale", "make", "model", "color", "castingNumber", "notes", "myValue", "purchasePrice"].forEach((k) => { const el = document.getElementById(k); if (el) f[k] = el.value; });
+  const q = $("#quickText"); if (q) state.sheet.quick = q.value;
+  return f;
+}
+function detailsFromForm(f) {
+  const o = (v) => (String(v || "").trim() ? String(v).trim() : null);
+  const year = f.year ? parseInt(f.year, 10) : null;
+  return { name: String(f.name).trim(), make: o(f.make), model: o(f.model), brand: o(f.brand), series: o(f.series), year: Number.isFinite(year) ? year : null, scale: o(f.scale), color: o(f.color), castingNumber: o(f.castingNumber), packaging: f.packaging, condition: f.condition, flags: f.flags };
+}
+async function quickFill() {
+  const s = state.sheet; readForm();
+  const text = (s.quick || "").trim();
+  if (!text) { s.error = "Type a few words about the car first."; return render(); }
+  s.quickBusy = true; s.error = null; render();
+  try {
+    const r = await aiIdentifyFromText(text);
+    s.form = formFromDetails(r.details, { notes: s.form.notes, myValue: s.form.myValue, purchasePrice: s.form.purchasePrice });
+    s.market = r.market; s.description = r.description;
+    toast("Filled in. Check the details, then Add car.");
+  } catch (e) { s.error = aiError(e); }
+  s.quickBusy = false; render();
+}
+function saveEdit() {
+  const s = state.sheet, f = readForm();
+  if (!String(f.name).trim()) { s.error = "Give the car a name."; return render(); }
+  if (f.year && (!/^\d{4}$/.test(f.year) || +f.year < 1900 || +f.year > 2100)) { s.error = "The year should look like 2024."; return render(); }
+  const d = detailsFromForm(f);
+  if (s.mode === "scan") { Object.assign(s.back, { details: d }); state.sheet = s.back; return render(); }
+  if (s.mode === "car") {
+    updateCar(s.id, { ...d, notes: String(f.notes || "").trim() || null });
+    state.sheet = { type: "detail", id: s.id }; return render();
+  }
+  const at = nowIso(), myValue = parseAmount(f.myValue), purchasePrice = parseAmount(f.purchasePrice);
+  const car = { ...d, id: newId(), status: "owned", createdAt: at, updatedAt: at, description: s.description || null, aiConfidence: null, currency: state.currency, purchasePrice, myValue, market: s.market || null, notes: String(f.notes || "").trim() || null,
+    valueHistory: s.market ? [{ date: at, estimate: s.market.estimate, low: s.market.low, high: s.market.high }] : [], myValueHistory: myValue !== null ? [{ date: at, value: myValue }] : [], thumb: null, hasPhoto: false };
+  upsertLocal(car); persistCar(car);
+  state.sheet = { type: "detail", id: car.id }; render();
+  toast("Added to your garage");
+}
+async function exportData() {
+  const data = JSON.stringify({ app: "diecast-collectors", version: 1, exportedAt: nowIso(), currency: state.currency, cars: state.cars.map(({ thumb, ...c }) => c) }, null, 2);
+  const filename = "diecast-collectors-" + nowIso().slice(0, 10) + ".json";
+  const dl = window.claude?.use ? await window.claude.use("downloads").catch(() => null) : null;
+  if (!dl) { toast("Saving files isn't available in this view."); return; }
+  try { await dl.save({ filename, data }); } catch (e) { if (e?.code !== "declined" && e?.code !== "cancelled") toast("The file wasn't saved."); }
+}
+async function importData(file) {
+  try {
+    const parsed = JSON.parse(await file.text());
+    const incoming = (Array.isArray(parsed.cars) ? parsed.cars : []).filter((c) => c && typeof c.id === "string" && typeof c.name === "string");
+    const have = new Set(state.cars.map((c) => c.id));
+    let n = 0;
+    for (const c of incoming) { if (have.has(c.id)) continue; const car = { photoUri: undefined, ...c, thumb: c.thumb || null, hasPhoto: false, updatedAt: nowIso() }; delete car.photoUri; delete car.photoPath; upsertLocal(car); await persistCar(car); n++; }
+    render(); toast(`${n} car${n === 1 ? "" : "s"} imported`);
+  } catch { toast("That file isn't a Diecast Collectors export."); }
+}
+
+// ---------- events ----------
+document.addEventListener("click", (ev) => {
+  const t = ev.target.closest("button, [data-open]");
+  if (!t) return;
+  const d = t.dataset, s = state.sheet;
+  if (d.view) { state.view = d.view; try { history.replaceState(null, "", "#" + d.view); } catch {} window.scrollTo(0, 0); return render(); }
+  if (d.open) return openDetail(d.open);
+  if (d.filter) { state.filter = d.filter; return render(); }
+  if (d.brand !== undefined && t.classList.contains("chip") && !s) { state.brand = state.brand === d.brand ? null : d.brand; return render(); }
+  if (d.currency) { state.currency = d.currency; backend?.saveSettings({ currency: d.currency }).catch(() => {}); return render(); }
+  if (d.status && s?.type === "scan") { readReviewInputs(); s.status = d.status; return render(); }
+  if (d.alt && s?.type === "scan") {
+    readReviewInputs();
+    const a = s.alternatives[+d.alt], cur = s.details;
+    s.alternatives[+d.alt] = { name: cur.name, brand: cur.brand, series: cur.series, year: cur.year, color: cur.color };
+    s.details = { ...cur, name: a.name, brand: a.brand ?? cur.brand, series: a.series, year: a.year, color: a.color ?? cur.color, castingNumber: null };
+    s.description = null; s.market = null; render();
+    return aiEstimate([{ ...s.details, currency: state.currency }]).then(([m]) => { if (state.sheet === s) { s.market = m; render(); } }).catch((e) => toast(aiError(e)));
+  }
+  if (d.edit && s?.type === "detail") { s.editing = d.edit; render(); setTimeout(() => $("#inlineMoney")?.focus(), 0); return; }
+  if (d.opt && s?.type === "edit") { readForm(); const [k, v] = d.opt.split(":"); s.form[k] = v; return render(); }
+  if (d.flag && s?.type === "edit") { readForm(); const f = s.form.flags; s.form.flags = f.includes(d.flag) ? f.filter((x) => x !== d.flag) : [...f, d.flag]; return render(); }
+  if (d.brandpick && s?.type === "edit") { readForm(); s.form.brand = d.brandpick; return render(); }
+  if (t.id === "sortBtn") { const o = ["recent", "value", "name", "gain"]; state.sort = o[(o.indexOf(state.sort) + 1) % o.length]; return render(); }
+  if (t.id === "estimateAll") return estimateAll();
+  if (t.id === "exportBtn") return exportData();
+  if (t.id === "importBtn") { $("#importInput").value = ""; return $("#importInput").click(); }
+  switch (d.act) {
+    case "scan": return startScan();
+    case "pickCamera": state.picker = false; $("#cameraInput").value = ""; $("#cameraInput").click(); return render();
+    case "pickLibrary": state.picker = false; $("#libraryInput").value = ""; $("#libraryInput").click(); return render();
+    case "pickCancel": state.picker = false; return render();
+    case "rescan": state.sheet = null; render(); return startScan();
+    case "retryScan": return runIdentify();
+    case "manual": return openManual();
+    case "closeSheet": pendingPhoto = s?.type === "scan" ? null : pendingPhoto; state.sheet = null; return render();
+    case "saveScan": return saveScan();
+    case "editScan": readReviewInputs(); state.sheet = { type: "edit", mode: "scan", back: s, form: formFromDetails(s.details) }; return render();
+    case "closeEdit": state.sheet = s.mode === "scan" ? s.back : s.mode === "car" ? { type: "detail", id: s.id } : null; return render();
+    case "saveEdit": return saveEdit();
+    case "quickFill": return quickFill();
+    case "editCar": { const c = state.cars.find((x) => x.id === s.id); state.sheet = { type: "edit", mode: "car", id: c.id, form: formFromDetails(c, { notes: c.notes || "" }) }; return render(); }
+    case "toggleStatus": { const c = state.cars.find((x) => x.id === s.id); return updateCar(c.id, { status: c.status === "owned" ? "wishlist" : "owned" }); }
+    case "reestimate": return reestimate();
+    case "cancelInline": s.editing = null; return render();
+    case "saveInline": {
+      const c = state.cars.find((x) => x.id === s.id), v = parseAmount($("#inlineMoney").value);
+      const patch = { [s.editing]: v };
+      if (s.editing === "myValue" && v !== null) patch.myValueHistory = sameDayReplace(c.myValueHistory, { date: nowIso(), value: v });
+      s.editing = null; return updateCar(c.id, patch);
+    }
+    case "deleteCar": {
+      const c = state.cars.find((x) => x.id === s.id);
+      return confirmBox("Delete this car?", `${c.name} and its value history will be removed from your garage.`, "Delete", async () => {
+        state.cars = state.cars.filter((x) => x.id !== c.id); photoCache.delete(c.id); state.sheet = null; render();
+        try { await backend.deleteCar(c.id); toast("Deleted"); } catch { toast("Couldn't delete it. Check your connection."); }
+      });
+    }
+    case "modalNo": state.modal = null; return render();
+    case "modalYes": { const fn = state.modal.onYes; state.modal = null; render(); return fn(); }
+  }
+});
+const FORM_FIELDS = ["name", "brand", "series", "year", "scale", "make", "model", "color", "castingNumber", "notes", "myValue", "purchasePrice"];
+document.addEventListener("input", (ev) => {
+  const id = ev.target.id, s = state.sheet;
+  if (id === "year") ev.target.value = ev.target.value.replace(/\D/g, "").slice(0, 4);
+  if (id === "q") { state.query = ev.target.value; render(); return; }
+  // Keep typed values in state, so a redraw (e.g. a sync update arriving) never loses them.
+  if (s?.type === "edit" && FORM_FIELDS.includes(id)) s.form[id] = ev.target.value;
+  if (s?.type === "edit" && id === "quickText") s.quick = ev.target.value;
+  if (s?.type === "scan" && id === "rvMine") s.myValue = ev.target.value;
+  if (s?.type === "scan" && id === "rvPaid") s.purchase = ev.target.value;
+});
+document.addEventListener("keydown", (ev) => {
+  if (ev.key === "Enter" && ev.target.id === "inlineMoney") $('[data-act="saveInline"]')?.click();
+  if (ev.key === "Escape" && (state.modal || state.picker)) { state.modal = null; state.picker = false; render(); }
+});
+$("#cameraInput").addEventListener("change", (e) => onPhotoPicked(e.target.files?.[0]));
+$("#libraryInput").addEventListener("change", (e) => onPhotoPicked(e.target.files?.[0]));
+$("#importInput").addEventListener("change", (e) => e.target.files?.[0] && importData(e.target.files[0]));
+
+// ---------- start ----------
+async function init() {
+  const hash = (location.hash || "").slice(1);
+  if (["garage", "insights", "settings"].includes(hash)) state.view = hash;
+  render();
+  const api = window.claude;
+  const [db, user, sample] = await Promise.all(["db", "user", "sample"].map((n) => api?.use ? api.use(n).catch(() => null) : Promise.resolve(null)));
+  sampleFn = sample || null;
+  if (sampleFn) { try { state.aiImages = !!(await sampleFn.limits())?.images; } catch { state.aiImages = false; } }
+  const uid = user ? await user.id().catch(() => null) : null;
+  backend = db && uid ? cloudBackend(db, uid) : localBackend();
+  state.storage = backend.kind;
+  try { const st = await backend.getSettings(); if (st.currency && CURRENCIES.includes(st.currency)) state.currency = st.currency; } catch {}
+  let firstSnap = true;
+  backend.subscribe((cars) => {
+    state.cars = cars.sort((a, b) => (b.createdAt || "").localeCompare(a.createdAt || ""));
+    firstSnap = false;
+    render();
+  }, (e) => {
+    console.warn("sync stopped", e);
+    toast("Lost the connection to your saved garage. Reload the page to reconnect.");
+  });
+  render();
+}
+init();
+</script>
