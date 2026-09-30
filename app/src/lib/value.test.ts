@@ -9,6 +9,7 @@ function car(over: Partial<Car> = {}): Car {
     id: 'c1',
     status: 'owned',
     photoUri: null,
+    photoPath: null,
     createdAt: '2026-06-01T10:00:00.000Z',
     updatedAt: '2026-06-01T10:00:00.000Z',
     description: null,

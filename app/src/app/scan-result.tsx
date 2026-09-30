@@ -11,21 +11,10 @@ import { CONDITION_LABEL, PACKAGING_LABEL, parseAmount } from '../lib/format';
 import { deletePhoto } from '../lib/photos';
 import { emptyDetails, useStore } from '../lib/store';
 import { colors, font, radius, space } from '../lib/theme';
-import type { CarDetails, IdentifyResponse, Valuation } from '../lib/types';
+import type { CarDetails, IdentifyResponse } from '../lib/types';
 import { toMarketValue } from '../lib/value';
 
 const STEPS = ['Identifying car', 'Looking up details', 'Checking market prices'];
-
-/** Fill gaps the online lookup found; never overwrite what the scan already read. */
-function applyCorrections(car: CarDetails, v: Valuation | null): CarDetails {
-  if (!v) return car;
-  return {
-    ...car,
-    series: car.series ?? v.corrections.series,
-    year: car.year ?? v.corrections.year,
-    castingNumber: car.castingNumber ?? v.corrections.castingNumber,
-  };
-}
 
 export default function ScanResult() {
   const insets = useSafeAreaInsets();
@@ -47,11 +36,11 @@ export default function ScanResult() {
     const timers = [setTimeout(() => setStep(1), 6000), setTimeout(() => setStep(2), 14000)];
     try {
       const result: IdentifyResponse = await identify(image, 'image/jpeg');
-      const { identification, valuation } = result;
+      const { identification } = result;
       updateDraft({
         result,
         pendingImage: null,
-        details: applyCorrections(identification.car, valuation),
+        details: identification.car,
         description: identification.description,
       });
     } catch (e) {

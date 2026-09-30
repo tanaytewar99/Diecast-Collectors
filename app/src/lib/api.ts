@@ -1,41 +1,33 @@
-import type { CarDetails, IdentifyResponse, Valuation } from './types';
+import { FunctionsFetchError, FunctionsHttpError } from '@supabase/supabase-js';
 import { useStore } from './store';
+import { supabase } from './supabase';
+import type { CarDetails, IdentifyResponse, Valuation } from './types';
 
 export class ApiError extends Error {}
 
-async function post<T>(path: string, body: unknown, timeoutMs: number): Promise<T> {
-  const { apiUrl, appKey } = useStore.getState().settings;
-  const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), timeoutMs);
-  let res: Response;
-  try {
-    res = await fetch(`${apiUrl.replace(/\/$/, '')}${path}`, {
-      method: 'POST',
-      headers: { 'content-type': 'application/json', ...(appKey ? { 'x-app-key': appKey } : {}) },
-      body: JSON.stringify(body),
-      signal: controller.signal,
-    });
-  } catch {
-    throw new ApiError(
-      controller.signal.aborted
-        ? 'The request took too long. Please try again.'
-        : "Can't reach the Diecast Collectors server. Check your connection or the server URL in Settings.",
-    );
-  } finally {
-    clearTimeout(timer);
+/** Call a Supabase Edge Function as the signed-in user. */
+async function call<T>(name: string, body: Record<string, unknown>, timeout: number): Promise<T> {
+  const { data, error } = await supabase.functions.invoke<T>(name, { body, timeout });
+  if (!error) return data as T;
+  if (error instanceof FunctionsHttpError) {
+    const payload = await (error.context as Response).json().catch(() => null);
+    throw new ApiError(payload?.error ?? 'Something went wrong. Please try again.');
   }
-  const json = await res.json().catch(() => null);
-  if (!res.ok) throw new ApiError(json?.error ?? `Server error (${res.status})`);
-  return json as T;
+  if (error instanceof FunctionsFetchError) {
+    throw new ApiError("Can't reach Diecast Collectors. Check your internet connection.");
+  }
+  throw new ApiError('Something went wrong. Please try again.');
 }
 
+/** Photo -> identification (AI) + market value (eBay). */
 export function identify(image: string, mediaType: string, hint?: string): Promise<IdentifyResponse> {
   const { currency } = useStore.getState().settings;
-  return post('/api/identify', { image, mediaType, currency, hint }, 180_000);
+  return call('identify', { image, mediaType, currency, hint }, 90_000);
 }
 
+/** Market value from current eBay listings. Free: no AI involved. */
 export async function valuate(car: CarDetails, currency: string): Promise<Valuation> {
-  const { valuation } = await post<{ valuation: Valuation }>('/api/valuate', { car: pickDetails(car), currency }, 150_000);
+  const { valuation } = await call<{ valuation: Valuation }>('valuate', { car: pickDetails(car), currency }, 45_000);
   return valuation;
 }
 
@@ -55,4 +47,8 @@ export function pickDetails(c: CarDetails): CarDetails {
     condition: c.condition,
     flags: c.flags,
   };
+}
+
+export async function deleteAccount(): Promise<void> {
+  await call('delete-account', {}, 60_000);
 }

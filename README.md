@@ -1,57 +1,45 @@
 # Diecast Collectors
 
 **Scan it. Know it. Track it.** Point your phone at a diecast car. The app identifies the exact release, fills in the
-details from the photo plus an online lookup, and tracks what your collection is worth over time.
+details, and tracks what your collection is worth over time. Everything is backed up to your account, so switching phones
+never loses anything.
 
-- **AI scan.** Claude vision reads the car, the card art, base markings and toy numbers. It returns make, model, brand, series, year,
-  scale, colour, casting #, packaging, condition, special variants (TH / STH / chase), plus up to 3 alternative matches.
-- **Auto-filled from online.** A web-search step confirms the series, year and casting # and prices the car from recent sold and listed
-  prices. You get an estimate, a low–high range, a confidence level and source links.
+- **AI scan.** Claude Haiku 4.5 reads the car, the card art, base markings and toy numbers, and returns make, model, brand,
+  series, year, scale, colour, casting #, packaging, condition, special variants (TH / STH / chase), plus up to 3 alternative
+  matches. About $0.005 per scan, and **only when you scan**.
+- **Free market prices.** Values come from current eBay listings of the same car (median plus a low–high range, with source
+  links). Weekly refreshes use no AI and cost nothing.
 - **Your own value.** Each car has **My value** (your own valuation, which the AI never overwrites) and **Purchase price**, with gain/loss.
-- **Value tracking.** Market values are re-checked automatically (weekly, a few cars per launch) or on demand. Each car and the whole
-  collection get a value-history chart.
-- **Light on typing.** After a scan you review a finished card and tap *Add to Garage*. The full edit form is one tap away but
-  never required.
-- Garage and wishlist, search, filters, sorting, insights (top cars, gainers and losers, brand breakdown), JSON export/import. Your collection is stored on the device.
+- **Value tracking.** Per-car and whole-collection value history.
+- **Safe in the cloud.** Sign in with your email and a 6-digit code (no password). Cars, photos, prices, value history and what
+  you paid are uploaded automatically. On a new phone, sign in and it's all back. The app also works offline.
+- **Light on typing.** After a scan you review a finished card and tap *Add to Garage*.
+- Garage and wishlist, search, filters, sorting, insights, JSON export/import.
 
-See **[docs/PRODUCT_SPEC.md](docs/PRODUCT_SPEC.md)** for the full product design: flows, data model, AI design, brand and metrics.
+**Getting started: [docs/SETUP.md](docs/SETUP.md)** (Supabase, eBay and Anthropic keys, then run on your phone).
+Product design: [docs/PRODUCT_SPEC.md](docs/PRODUCT_SPEC.md).
 
 ## Repo layout
 
 | Path | What |
 |---|---|
 | `app/` | Expo (SDK 57) React Native app with TypeScript and Expo Router. Runs on iOS, Android and web. |
-| `server/` | Small Node/TypeScript API (Hono) that holds the Anthropic API key and calls Claude. |
-| `docs/` | Product spec. |
+| `supabase/migrations/` | Database: `cars` table, photo bucket, per-user security rules, daily scan cap |
+| `supabase/functions/` | Edge functions: `identify` (Claude + eBay), `valuate` (eBay only), `delete-account` |
+| `supabase/tests/` | Deno tests for the functions, and the schema run against real Postgres (PGlite) |
+| `docs/` | Setup guide and product spec |
 
-## Run it
-
-### 1. Server
-
-```bash
-cd server
-npm install
-cp .env.example .env        # add your ANTHROPIC_API_KEY
-npm start                   # http://localhost:8787
-npm test                    # unit tests (mocked AI)
-```
-
-Endpoints: `POST /api/identify` (photo → identification + valuation), `POST /api/valuate` (details → valuation), `GET /health`.
-It uses `claude-opus-5-5` with adaptive thinking and structured outputs, and web search for pricing. If Claude declines a request, the server
-automatically falls back to another model. Optional hardening: `APP_SHARED_KEY` (checked against the app's `x-app-key` header) and a per-IP rate limit.
-
-### 2. App
+## Development
 
 ```bash
-cd app
-npm install
-EXPO_PUBLIC_API_URL=http://<your-computer-LAN-IP>:8787 npx expo start
+# App
+cd app && npm install
+cp .env.example .env.local        # Supabase URL + key
+npx expo start
+npm run typecheck && npm run lint && npm test
+npm run e2e                        # two-phone sync test against a fake Supabase (needs Playwright + Chromium)
+
+# Backend (Deno)
+cd supabase/tests && deno test --allow-env --allow-read .
+cd supabase && deno lint functions tests
 ```
-
-Open it in Expo Go or a development build, or press `w` for web. You can also change the server URL in the app under **Settings → AI server**.
-
-Checks: `npm run typecheck`, `npm run lint`, `npm test`.
-
-Production builds use EAS: `npx eas-cli@latest build -p ios|android`. The app name, icons, bundle id (`com.diecastcollectors.app`) and
-permission strings are in `app/app.json`. Brand assets are generated from `app/assets/brand/mark.svg` via
-`NODE_PATH=$(npm root -g) node app/assets/brand/render.mjs`.

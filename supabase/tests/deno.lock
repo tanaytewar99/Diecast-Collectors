@@ -1,0 +1,23 @@
+{
+  "version": "5",
+  "specifiers": {
+    "npm:@electric-sql/pglite@0.5.8": "0.5.8",
+    "npm:zod@4.6.5": "4.6.5"
+  },
+  "npm": {
+    "@electric-sql/pglite@0.5.8": {
+      "integrity": "sha512-n9tsbUOhwx2epK1V0ZG9Ar4SHWUju04dhmzZXiSBXwBoleOvIfals33NAaWgagQVAL4Rbvx/Ptsu3P+pA09f6Q=="
+    },
+    "zod@4.6.5": {
+      "integrity": "sha512-v5l/aFXZQeai4awLbOpSoHecE9UiMrnfx75tEXLjNonXVARxQ5mOeipTjROUchszUNCqnE+hqAMujRsRHsut2Q=="
+    }
+  },
+  "workspace": {
+    "dependencies": [
+      "npm:@anthropic-ai/sdk@0.129.0",
+      "npm:@electric-sql/pglite@0.5.8",
+      "npm:@supabase/supabase-js@2.117.2",
+      "npm:zod@4.6.5"
+    ]
+  }
+}

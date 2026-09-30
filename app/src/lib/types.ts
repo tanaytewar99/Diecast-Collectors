@@ -43,7 +43,10 @@ export interface ValuePoint {
 export interface Car extends CarDetails {
   id: string;
   status: CarStatus;
+  /** Photo on this device (file URI, or data URI on web). Never synced. */
   photoUri: string | null;
+  /** Photo in cloud storage ("<user id>/<car id>.jpg"), null until uploaded. */
+  photoPath: string | null;
   createdAt: string;
   updatedAt: string;
   description: string | null;
@@ -83,7 +86,8 @@ export interface Valuation {
   confidence: 'low' | 'medium' | 'high';
   rationale: string;
   sources: Source[];
-  corrections: { series: string | null; year: number | null; castingNumber: string | null };
+  currency: string;
+  listingsCount: number;
 }
 
 export interface IdentifyResponse {

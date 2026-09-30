@@ -1,0 +1,12 @@
+{
+  "imports": {
+    "@anthropic-ai/sdk": "npm:@anthropic-ai/sdk@0.129.0",
+    "@anthropic-ai/sdk/": "npm:/@anthropic-ai/sdk@0.129.0/",
+    "@supabase/supabase-js": "npm:@supabase/supabase-js@2.117.2",
+    "zod": "npm:zod@4.6.5",
+    "@electric-sql/pglite": "npm:@electric-sql/pglite@0.5.8"
+  },
+  "tasks": {
+    "test": "deno test --allow-env --allow-read ."
+  }
+}

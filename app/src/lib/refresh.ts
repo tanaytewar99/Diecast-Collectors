@@ -23,8 +23,11 @@ export async function refreshCar(id: string): Promise<void> {
 
 let ranThisSession = false;
 
-/** On app open: re-value up to `max` cars whose market value is older than 7 days, oldest first. */
-export async function autoRefreshStale(max = 5): Promise<void> {
+/**
+ * On app open: re-value up to `max` cars whose market value is older than 7 days, oldest first.
+ * Prices come from eBay listings (no AI), so this costs nothing.
+ */
+export async function autoRefreshStale(max = 25): Promise<void> {
   const { cars, settings } = useStore.getState();
   if (ranThisSession || !settings.autoRefresh) return;
   ranThisSession = true;

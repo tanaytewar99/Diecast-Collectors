@@ -10,13 +10,14 @@ collection management and identification. **Diecast Collectors** starts from the
 
 | | CarLect-style apps | Diecast Collectors |
 |---|---|---|
-| Identify by photo | ✅ | ✅ AI vision (Claude) identifies make, model, brand, series, year, casting, variant |
-| Auto-filled details | Partial | ✅ Nearly every field comes from the scan plus an online lookup |
-| Market value | Limited / none | ✅ Estimated from live web listings and sold prices, with a low–high range and sources |
+| Identify by photo | ✅ | ✅ AI vision (Claude Haiku) identifies make, model, brand, series, year, casting, variant |
+| Auto-filled details | Partial | ✅ Nearly every field comes from the scan; prices come from live eBay listings |
+| Market value | Limited / none | ✅ Estimated from current eBay listings of the same car, with a low–high range and sources (free, no AI) |
 | Value over time | ❌ | ✅ Periodic re-valuation builds a history chart per car and for the whole collection |
 | **My value** (collector's own valuation) | ❌ | ✅ A dedicated field, shown next to market value |
 | Purchase price and gain/loss | ❌ | ✅ |
 | Manual data entry | Heavy | Minimal: review, then save. Editing is available but never required |
+| Backup & switching phones | Varies | ✅ Automatic cloud backup of everything (photos, prices, history); sign in on a new phone and it is all there |
 
 ## 2. Target users
 
@@ -35,7 +36,8 @@ collection management and identification. **Diecast Collectors** starts from the
 3. **Only two inputs are asked for up front:** *My value* and *Purchase price*. The AI can't know them, and they matter most for
    value tracking. Both are optional.
 4. **Show the evidence behind a value.** Every market value shows a range, a confidence level, the date it was checked, and source links.
-5. **Local-first.** The collection lives on the device and works offline. The network is only used to scan and refresh values.
+5. **Never lose a collection.** Everything is backed up to the user's account automatically, and the phone keeps a full copy so the app works offline.
+6. **Near-zero running cost.** AI is used once per car, when it's scanned, on the cheapest capable model. Everything else (prices, refreshes, sync) is free.
 
 ## 4. Core user flows
 
@@ -81,7 +83,7 @@ same edit form.
 ### 4.4 Value tracking
 - Each saved car keeps a list of `valueHistory` snapshots `{date, estimate, low, high}`.
 - **Automatic refresh:** when the app opens, cars whose market value is more than 7 days old are re-valued in the background,
-  up to 5 per session, oldest first. This keeps API cost bounded.
+  up to 25 per session, oldest first. Refreshes use eBay listings only (no AI), so they are free.
 - **Manual refresh:** ↻ on a car, or "Refresh all" on the Insights tab (with a warning if there are more than 20 cars).
 - My value changes are also kept (`myValueHistory`) so the chart can show them.
 
@@ -94,11 +96,11 @@ same edit form.
 ### 4.6 Settings
 - Currency (USD default; EUR, GBP, INR, JPY, CAD, AUD). Valuations are requested in this currency.
 - Auto-refresh values on/off.
-- Server URL (for self-hosting or dev).
-- Export collection (JSON share), import JSON, erase all data.
+- Account & backup: signed-in email, sync status ("All changes saved to the cloud"), Sync now, Sign out.
+- Export collection (JSON share) as an extra personal copy, import JSON, delete account (removes all cloud data).
 - About: version and brand.
 
-## 5. Data model (on-device)
+## 5. Data model (on-device, mirrored to the cloud)
 
 ```ts
 type CarStatus = 'owned' | 'wishlist';
@@ -106,7 +108,8 @@ type CarStatus = 'owned' | 'wishlist';
 interface Car {
   id: string;
   status: CarStatus;
-  photoUri: string | null;          // local file copy
+  photoUri: string | null;          // photo on this device (not synced)
+  photoPath: string | null;         // photo in cloud storage
   createdAt: string; updatedAt: string;
 
   // Identification (filled by AI, editable)
@@ -150,22 +153,34 @@ interface Car {
 `effectiveValue = myValue ?? market.estimate ?? 0`. The user's own valuation wins. This keeps a collector's knowledge (rarity, condition) authoritative
 while market data is still shown next to it.
 
-## 6. AI system
+## 6. Accounts, sync and backend
 
-A thin backend (`/server`) holds the Anthropic API key. The key never ships in the app.
+### 6.1 Accounts and cloud sync (Supabase)
+- **Sign-in:** email plus a 6-digit one-time code. There's no password, so users can always get back in on a new phone. Sign-in is required, so every
+  collection is backed up from the first car.
+- **Cloud copy:** each car is one JSON row in `cars` (Postgres), including details, prices, `valueHistory`, `myValue`, `purchasePrice`
+  and notes. Photos live in the private `car-photos` bucket under `<user id>/<car id>.jpg`. Row-level security limits every
+  account to its own rows and files.
+- **Sync engine (app):** local-first. Every change marks the car *dirty*, and ~1.5 s later the app uploads photos, then cars, then
+  deletions, and pulls changes from other devices (`synced_at > last pull`). It also syncs on sign-in and when the app returns to the
+  foreground. Conflicts go to the most recent edit, enforced in the app and by a database trigger that ignores stale writes.
+- **New phone:** sign in, then everything is pulled down and photos are downloaded into local storage.
+- **Account deletion:** the `delete-account` function removes photos and the user. Cars cascade. (App stores require this.)
+- The currency preference is stored in the account's metadata so it follows the user.
 
-| Endpoint | Input | What it does |
-|---|---|---|
-| `POST /api/identify` | `{image (base64), mediaType, currency}` | **Step 1: Vision.** Claude reads the photo (car, card art, base text, toy numbers) and returns structured identification + alternatives. **Step 2: Enrich and value.** Claude uses web search to confirm the series/year/casting number and to find current listings and sold prices, then returns a structured valuation with sources. |
-| `POST /api/valuate` | `{car details, currency}` | Step 2 only. Used for re-valuation. |
-| `GET /health` | – | Liveness check. |
+### 6.2 AI and pricing (Supabase Edge Functions)
+The Anthropic and eBay keys live only in Supabase secrets, never in the app.
 
-- Model: `claude-opus-5-5` with adaptive thinking; server-side web search (`web_search_20260209`).
-- Output: strict JSON schemas (structured outputs for identification, and a strict `submit_valuation` tool for the web-search valuation step).
-- Safety and cost: images are resized on-device to ≤ 1568px JPEG before upload. Web search is capped at `max_uses: 5` per valuation.
-  A simple per-IP rate limit runs on the server. An optional `APP_SHARED_KEY` header check blocks casual abuse.
-- Failure behaviour: if the valuation fails but identification succeeds, the car is still returned with `market: null`, and the
-  app shows "Value unavailable, tap to retry".
+| Function | Input | What it does | Cost |
+|---|---|---|---|
+| `identify` | `{image (base64), mediaType, currency}` | **Claude Haiku 4.5** reads the photo (card art, base text, toy numbers) and returns a structured identification plus alternatives, then prices it via eBay | ~$0.005 per scan |
+| `valuate` | `{car details, currency}` | eBay Browse API: current buy-it-now listings, relevance-filtered (no lots, customs or multipacks; TH/STH only matched like-for-like), outliers removed, median plus interquartile range. Other currencies are converted with ECB rates (Frankfurter). | free |
+| `delete-account` | – | Deletes the caller's photos and account | free |
+
+- Every function requires a signed-in user. `identify` is capped per user per day (`DAILY_SCAN_LIMIT`, default 40) via
+  `consume_scan()`, so AI spend can't run away.
+- Failure behaviour: if pricing fails but identification succeeds, the car is still returned with `market: null`, and the app
+  shows "Value unavailable, tap to retry".
 
 ## 7. Brand
 
@@ -187,9 +202,10 @@ A thin backend (`/server`) holds the Anthropic API key. The key never ships in t
 ## 9. Roadmap
 
 - **v1 (this build):** scan and identify, auto-fill, market valuation with sources, my value and purchase price, value history,
-  garage and wishlist, insights, JSON export/import, local-first storage.
-- **v1.1:** multiple photos per car, barcode scan of card UPCs, batch scan (several cars in one photo), CSV export.
-- **v2:** accounts and cloud sync, price alerts ("your STH is up 20%"), sharing a public garage, community corrections to IDs.
+  garage and wishlist, insights, JSON export/import, accounts with automatic cloud backup and multi-device sync.
+- **v1.1:** batch import (pick many photo-box shots at once and review them as a queue), multiple photos per car, barcode scan
+  of card UPCs, CSV export, Google/Apple sign-in.
+- **v2:** price alerts ("your STH is up 20%"), sharing a public garage, community corrections to IDs, sold-price data.
 
 ## 10. Out of scope for v1
-Accounts and cloud sync, marketplace and trading, social feed, and ads.
+Marketplace and trading, social feed, and ads.

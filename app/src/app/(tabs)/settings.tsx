@@ -5,12 +5,14 @@ import * as Sharing from 'expo-sharing';
 import Constants from 'expo-constants';
 import { router } from 'expo-router';
 import { useState } from 'react';
-import { Alert, Platform, ScrollView, StyleSheet, Switch, Text, TextInput, View } from 'react-native';
+import { Alert, Platform, ScrollView, StyleSheet, Switch, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Button, Card, Chip, Label } from '../../components/ui';
-import { CURRENCIES } from '../../lib/format';
-import { deletePhoto } from '../../lib/photos';
-import { DEFAULT_API_URL, emptyDetails, useStore } from '../../lib/store';
+import { deleteAccount } from '../../lib/api';
+import { CURRENCIES, relativeTime } from '../../lib/format';
+import { emptyDetails, useStore } from '../../lib/store';
+import { useAuth } from '../../lib/supabase';
+import { pendingChanges, saveAccountPreference, signOutAndClear, syncNow, useSyncStatus } from '../../lib/sync';
 import { BRAND, colors, font, radius, space } from '../../lib/theme';
 import type { Car } from '../../lib/types';
 
@@ -19,20 +21,65 @@ export default function Settings() {
   const settings = useStore((s) => s.settings);
   const cars = useStore((s) => s.cars);
   const update = useStore((s) => s.updateSettings);
-  const [apiUrl, setApiUrl] = useState(settings.apiUrl);
-  const [appKey, setAppKey] = useState(settings.appKey);
-  const [health, setHealth] = useState<string | null>(null);
+  const email = useAuth((s) => s.session?.user.email ?? '');
+  const status = useSyncStatus();
+  const pending = useStore((s) => s.sync.dirty.length + s.sync.deleted.length);
+  const [accountBusy, setAccountBusy] = useState(false);
 
-  const testServer = async () => {
-    update({ apiUrl: apiUrl.trim() || DEFAULT_API_URL, appKey: appKey.trim() });
-    setHealth('Checking…');
-    try {
-      const res = await fetch(`${(apiUrl.trim() || DEFAULT_API_URL).replace(/\/$/, '')}/health`);
-      setHealth(res.ok ? 'Connected ✓' : `Server responded ${res.status}`);
-    } catch {
-      setHealth("Can't reach server");
+  const confirm = (title: string, message: string, action: string, onYes: () => void) => {
+    if (Platform.OS === 'web') {
+      if (window.confirm(`${title}\n\n${message}`)) onYes();
+      return;
     }
+    Alert.alert(title, message, [
+      { text: 'Cancel', style: 'cancel' },
+      { text: action, style: 'destructive', onPress: onYes },
+    ]);
   };
+
+  const signOut = async () => {
+    setAccountBusy(true);
+    await syncNow();
+    setAccountBusy(false);
+    const unsynced = pendingChanges();
+    confirm(
+      'Sign out?',
+      unsynced
+        ? `${unsynced} change${unsynced === 1 ? " hasn't" : "s haven't"} reached the cloud yet (no connection) and will be lost if you sign out now.`
+        : 'Your collection stays safe in the cloud. Sign in again with the same email on any phone to get it back.',
+      'Sign out',
+      () => void signOutAndClear(),
+    );
+  };
+
+  const removeAccount = () =>
+    confirm(
+      'Delete account?',
+      'This permanently deletes your account and your whole collection (cars, photos, value history) from the cloud and this phone. This cannot be undone.',
+      'Delete forever',
+      async () => {
+        setAccountBusy(true);
+        try {
+          await deleteAccount();
+          await signOutAndClear();
+        } catch (e) {
+          Alert.alert('Could not delete account', e instanceof Error ? e.message : 'Please try again.');
+        } finally {
+          setAccountBusy(false);
+        }
+      },
+    );
+
+  const syncLine =
+    status.state === 'syncing'
+      ? 'Syncing…'
+      : status.state === 'error'
+        ? status.error
+        : pending
+          ? `${pending} change${pending === 1 ? '' : 's'} waiting to upload`
+          : status.lastSyncedAt
+            ? `All changes saved to the cloud · ${relativeTime(status.lastSyncedAt)}`
+            : 'All changes saved to the cloud';
 
   const exportData = async () => {
     const json = JSON.stringify({ app: 'diecast-collectors', version: 1, exportedAt: new Date().toISOString(), cars }, null, 2);
@@ -62,21 +109,6 @@ export default function Settings() {
     }
   };
 
-  const eraseAll = () => {
-    const doErase = () => {
-      useStore.getState().cars.forEach((c) => deletePhoto(c.photoUri));
-      useStore.getState().clearAll();
-    };
-    if (Platform.OS === 'web') {
-      if (window.confirm('Erase your entire collection? This cannot be undone.')) doErase();
-      return;
-    }
-    Alert.alert('Erase all data?', 'This permanently deletes every car in your collection.', [
-      { text: 'Cancel', style: 'cancel' },
-      { text: 'Erase', style: 'destructive', onPress: doErase },
-    ]);
-  };
-
   const addManually = () => {
     useStore.getState().setDraft({
       photoUri: null,
@@ -96,20 +128,44 @@ export default function Settings() {
       <Text style={[font.title, { color: colors.text }]}>Settings</Text>
 
       <Card>
+        <Label>Account & backup</Label>
+        <View style={styles.rowBetween}>
+          <Ionicons
+            name={status.state === 'error' ? 'cloud-offline' : pending || status.state === 'syncing' ? 'cloud-upload' : 'cloud-done'}
+            size={26}
+            color={status.state === 'error' ? colors.gold : colors.up}
+          />
+          <View style={{ flex: 1 }}>
+            <Text style={styles.rowTitle}>{email}</Text>
+            <Text style={styles.help}>{syncLine}</Text>
+          </View>
+        </View>
+        <Text style={styles.help}>
+          Everything (cars, photos, prices, value history, what you paid) is backed up to this account. On a new phone, sign in
+          with the same email.
+        </Text>
+        <Button title="Sync now" variant="secondary" icon="sync" onPress={() => void syncNow()} loading={status.state === 'syncing'} />
+        <Button title="Sign out" variant="ghost" icon="log-out-outline" onPress={signOut} loading={accountBusy} />
+      </Card>
+
+      <Card>
         <Label>Currency</Label>
         <View style={styles.wrap}>
           {CURRENCIES.map((c) => (
-            <Chip key={c} label={c} active={settings.currency === c} onPress={() => update({ currency: c })} />
+            <Chip key={c} label={c} active={settings.currency === c} onPress={() => {
+                update({ currency: c });
+                saveAccountPreference({ currency: c });
+              }} />
           ))}
         </View>
-        <Text style={styles.help}>New scans and refreshes are valued in this currency. Existing cars keep the currency they were added in.</Text>
+        <Text style={styles.help}>New scans and refreshes are valued in this currency. Existing cars keep the currency they were added in. Saved to your account.</Text>
       </Card>
 
       <Card>
         <View style={styles.rowBetween}>
           <View style={{ flex: 1 }}>
             <Text style={styles.rowTitle}>Auto-refresh values</Text>
-            <Text style={styles.help}>When you open the app, update up to 5 cars whose market value is over a week old.</Text>
+            <Text style={styles.help}>When you open the app, update cars whose market value is over a week old. Free: prices come from eBay listings, not AI.</Text>
           </View>
           <Switch
             value={settings.autoRefresh}
@@ -128,15 +184,8 @@ export default function Settings() {
         <Label>Your data</Label>
         <Button title="Export collection (JSON)" variant="secondary" icon="share-outline" onPress={exportData} />
         <Button title="Import collection" variant="secondary" icon="download-outline" onPress={importData} />
-        <Button title="Erase all data" variant="danger" icon="trash-outline" onPress={eraseAll} />
-      </Card>
-
-      <Card>
-        <Label>AI server</Label>
-        <TextInput value={apiUrl} onChangeText={setApiUrl} autoCapitalize="none" autoCorrect={false} placeholder={DEFAULT_API_URL} placeholderTextColor={colors.textDim} style={styles.input} />
-        <TextInput value={appKey} onChangeText={setAppKey} autoCapitalize="none" autoCorrect={false} secureTextEntry placeholder="App key (optional)" placeholderTextColor={colors.textDim} style={styles.input} />
-        <Button title="Save & test connection" variant="ghost" icon="pulse" onPress={testServer} />
-        {health && <Text style={styles.help}>{health}</Text>}
+        <Text style={styles.help}>An extra copy you keep yourself. Your collection is already backed up to your account.</Text>
+        <Button title="Delete account" variant="danger" icon="trash-outline" onPress={removeAccount} disabled={accountBusy} />
       </Card>
 
       <View style={styles.about}>

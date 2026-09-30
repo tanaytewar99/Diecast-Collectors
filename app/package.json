@@ -6,6 +6,7 @@
     "@expo/metro-runtime": "~57.0.16",
     "@expo/vector-icons": "^15.0.2",
     "@react-native-async-storage/async-storage": "2.2.0",
+    "@supabase/supabase-js": "^2.117.2",
     "expo": "~57.0.26",
     "expo-camera": "~57.0.6",
     "expo-constants": "~57.0.20",
@@ -27,6 +28,7 @@
     "react-native-safe-area-context": "~5.7.0",
     "react-native-screens": "~4.26.0",
     "react-native-svg": "15.15.4",
+    "react-native-url-polyfill": "^4.0.0",
     "react-native-web": "~0.21.0",
     "zustand": "^5.0.15"
   },
@@ -44,7 +46,8 @@
     "web": "expo start --web",
     "typecheck": "tsc --noEmit",
     "test": "tsx --test src/lib/*.test.ts",
-    "lint": "expo lint"
+    "lint": "expo lint",
+    "e2e": "EXPO_PUBLIC_SUPABASE_URL=http://fake-supabase.local EXPO_PUBLIC_SUPABASE_ANON_KEY=anon-test expo export --platform web && node e2e/sync.e2e.cjs"
   },
   "private": true
 }

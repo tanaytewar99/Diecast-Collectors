@@ -1,0 +1,20 @@
+# Supabase CLI config. Used by `npx supabase link`, `db push` and `functions deploy`.
+project_id = "diecast-collectors"
+
+[auth]
+# Sign-in is by one-time email code, no passwords.
+enable_signup = true
+
+[auth.email]
+enable_signup = true
+otp_length = 6
+otp_expiry = 3600
+
+[functions.identify]
+verify_jwt = true
+
+[functions.valuate]
+verify_jwt = true
+
+[functions.delete-account]
+verify_jwt = true

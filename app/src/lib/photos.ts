@@ -43,3 +43,33 @@ export function deletePhoto(uri: string | null) {
     // Best effort; a leftover file is harmless.
   }
 }
+
+/** JPEG bytes of a stored photo, for uploading to the cloud. */
+export async function readPhotoBytes(uri: string): Promise<Uint8Array> {
+  if (uri.startsWith('data:')) {
+    const bin = atob(uri.slice(uri.indexOf(',') + 1));
+    const bytes = new Uint8Array(bin.length);
+    for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+    return bytes;
+  }
+  return new File(uri).bytes();
+}
+
+/** Download a photo from a (signed) URL into local storage; returns the local URI. */
+export async function savePhotoFromUrl(url: string, carId: string): Promise<string> {
+  if (Platform.OS === 'web') {
+    const blob = await (await fetch(url)).blob();
+    return await new Promise<string>((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(String(reader.result));
+      reader.onerror = () => reject(reader.error);
+      reader.readAsDataURL(blob);
+    });
+  }
+  const dir = new Directory(Paths.document, 'photos');
+  if (!dir.exists) dir.create({ intermediates: true });
+  const dest = new File(dir, `${carId}-cloud.jpg`);
+  if (dest.exists) dest.delete();
+  const file = await File.downloadFileAsync(url, dest);
+  return file.uri;
+}
